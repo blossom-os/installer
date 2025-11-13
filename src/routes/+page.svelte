@@ -51,7 +51,7 @@
 			or perform system recovery tasks.
 		</Card.Description>
 	</Card.Header>
-	<Card.Content class="mt-6">
+	<Card.Content class="mt-2">
 		<Item.Root class="cursor-pointer">
 			<Item.Media />
 			<Item.Content>
@@ -65,94 +65,94 @@
 					<img
 						src="/installer.svg"
 						alt="Install blossomOS"
-						width="64"
-						height="64"
+						width="48"
+						height="48"
 						class="cursor-pointer"
 					/>
 				</button>
 			</Item.Actions>
 		</Item.Root>
-		<Item.Root class="cursor-pointer">
-			<Item.Media />
-			<Item.Content>
-				<Item.Title>Partition Manager</Item.Title>
-				<Item.Description>
-					Launch the partition manager to manage disk partitions and format drives.
-				</Item.Description>
-			</Item.Content>
-			<Item.Actions>
-				<button on:click={handleGparted}>
+		<button on:click={handleGparted} class="block w-full">
+			<Item.Root class="cursor-pointer">
+				<Item.Media />
+				<Item.Content>
+					<Item.Title>Partition Manager</Item.Title>
+					<Item.Description class="text-left">
+						Launch the partition manager to manage disk partitions and format drives.
+					</Item.Description>
+				</Item.Content>
+				<Item.Actions>
 					<img
 						src="/gparted.svg"
 						alt="Partition Manager"
-						width="64"
-						height="64"
+						width="48"
+						height="48"
 						class="cursor-pointer"
 					/>
-				</button>
-			</Item.Actions>
-		</Item.Root>
-		<Item.Root class="cursor-pointer">
-			<Item.Media />
-			<Item.Content>
-				<Item.Title>Backup and Restore</Item.Title>
-				<Item.Description>
-					Access Timeshift to create or restore system backups.
-				</Item.Description>
-			</Item.Content>
-			<Item.Actions>
-				<button on:click={handleTimeshift}>
+				</Item.Actions>
+			</Item.Root>
+		</button>
+		<button on:click={handleTimeshift} class="block w-full">
+			<Item.Root class="cursor-pointer">
+				<Item.Media />
+				<Item.Content>
+					<Item.Title>Backup and Restore</Item.Title>
+					<Item.Description class="text-left">
+						Access Timeshift to create or restore system backups.
+					</Item.Description>
+				</Item.Content>
+				<Item.Actions>
 					<img
 						src="/backup.svg"
 						alt="Backup and Restore"
-						width="64"
-						height="64"
+						width="48"
+						height="48"
 						class="cursor-pointer"
 					/>
-				</button>
-			</Item.Actions>
-		</Item.Root>
-		<Item.Root class="cursor-pointer">
-			<Item.Media />
-			<Item.Content>
-				<Item.Title>Terminal</Item.Title>
-				<Item.Description>
-					Open a terminal to perform advanced system recovery tasks using command-line
-					tools.
-				</Item.Description>
-			</Item.Content>
-			<Item.Actions>
-				<button on:click={handleTerminal}>
+				</Item.Actions>
+			</Item.Root>
+		</button>
+		<button on:click={handleTerminal} class="block w-full">
+			<Item.Root class="cursor-pointer">
+				<Item.Media />
+				<Item.Content>
+					<Item.Title>Terminal</Item.Title>
+					<Item.Description class="text-left">
+						Open a terminal to perform advanced system recovery tasks using command-line
+						tools.
+					</Item.Description>
+				</Item.Content>
+				<Item.Actions>
 					<img
 						src="/terminal.svg"
 						alt="System Terminal"
-						width="64"
-						height="64"
+						width="48"
+						height="48"
 						class="cursor-pointer"
 					/>
-				</button>
-			</Item.Actions>
-		</Item.Root>
-		<Item.Root class="cursor-pointer">
-			<Item.Media />
-			<Item.Content>
-				<Item.Title>Firefox</Item.Title>
-				<Item.Description>
-					Launch the Firefox web browser to access online help and resources.
-				</Item.Description>
-			</Item.Content>
-			<Item.Actions>
-				<button on:click={handleFirefox}>
+				</Item.Actions>
+			</Item.Root>
+		</button>
+		<button on:click={handleFirefox} class="block w-full">
+			<Item.Root class="cursor-pointer">
+				<Item.Media />
+				<Item.Content>
+					<Item.Title>Firefox</Item.Title>
+					<Item.Description class="text-left">
+						Launch the Firefox web browser to access online help and resources.
+					</Item.Description>
+				</Item.Content>
+				<Item.Actions>
 					<img
 						src="/firefox.svg"
 						alt="Firefox"
-						width="64"
-						height="64"
+						width="48"
+						height="48"
 						class="cursor-pointer"
 					/>
-				</button>
-			</Item.Actions>
-		</Item.Root>
+				</Item.Actions>
+			</Item.Root>
+		</button>
 		<Item.Root class="cursor-pointer">
 			<Item.Media />
 			<Item.Content>
@@ -166,30 +166,32 @@
 					<img
 						src="/wifi.svg"
 						alt="WiFi Manager"
-						width="64"
-						height="64"
+						width="48"
+						height="48"
 						class="cursor-pointer"
 					/>
 				</button>
 			</Item.Actions>
 		</Item.Root>
-		<Item.Root class="cursor-pointer">
-			<Item.Media />
-			<Item.Content>
-				<Item.Title>Shutdown</Item.Title>
-				<Item.Description>Shut down the system safely.</Item.Description>
-			</Item.Content>
-			<Item.Actions>
-				<button on:click={handleShutdown}>
+		<button on:click={handleShutdown} class="block w-full">
+			<Item.Root class="cursor-pointer">
+				<Item.Media />
+				<Item.Content>
+					<Item.Title>Shutdown</Item.Title>
+					<Item.Description class="text-left">
+						Shut down the system safely.
+					</Item.Description>
+				</Item.Content>
+				<Item.Actions>
 					<img
 						src="/shutdown.svg"
 						alt="System Shutdown"
-						width="64"
-						height="64"
+						width="48"
+						height="48"
 						class="cursor-pointer"
 					/>
-				</button>
-			</Item.Actions>
-		</Item.Root>
+				</Item.Actions>
+			</Item.Root>
+		</button>
 	</Card.Content>
 </main>
