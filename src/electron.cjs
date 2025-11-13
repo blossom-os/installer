@@ -98,3 +98,15 @@ ipcMain.on('shutdown', (event) => {
 		console.log('Shutdown command executed successfully');
 	});
 });
+
+ipcMain.on('run-command', (event, command) => {
+	exec(command, (error, stdout, stderr) => {
+		if (error) {
+			console.error(`Command error (${command}):`, error);
+			return;
+		}
+		console.log(`Command executed successfully: ${command}`);
+		if (stdout) console.log('stdout:', stdout);
+		if (stderr) console.log('stderr:', stderr);
+	});
+});

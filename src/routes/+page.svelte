@@ -2,6 +2,38 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
 
+	function handleGparted() {
+		if (window.electron) {
+			window.electron.runCommand('gparted');
+		} else {
+			console.log('Electron API not available');
+		}
+	}
+
+	function handleTimeshift() {
+		if (window.electron) {
+			window.electron.runCommand('timeshift-gtk');
+		} else {
+			console.log('Electron API not available');
+		}
+	}
+
+	function handleTerminal() {
+		if (window.electron) {
+			window.electron.runCommand('kitty');
+		} else {
+			console.log('Electron API not available');
+		}
+	}
+
+	function handleFirefox() {
+		if (window.electron) {
+			window.electron.runCommand('firefox');
+		} else {
+			console.log('Electron API not available');
+		}
+	}
+
 	function handleShutdown() {
 		if (window.electron) {
 			window.electron.shutdown();
@@ -49,7 +81,7 @@
 				</Item.Description>
 			</Item.Content>
 			<Item.Actions>
-				<button>
+				<button on:click={handleGparted}>
 					<img
 						src="/gparted.svg"
 						alt="Partition Manager"
@@ -69,7 +101,7 @@
 				</Item.Description>
 			</Item.Content>
 			<Item.Actions>
-				<button>
+				<button on:click={handleTimeshift}>
 					<img
 						src="/backup.svg"
 						alt="Backup and Restore"
@@ -90,7 +122,7 @@
 				</Item.Description>
 			</Item.Content>
 			<Item.Actions>
-				<button>
+				<button on:click={handleTerminal}>
 					<img
 						src="/terminal.svg"
 						alt="System Terminal"
@@ -110,7 +142,7 @@
 				</Item.Description>
 			</Item.Content>
 			<Item.Actions>
-				<button>
+				<button on:click={handleFirefox}>
 					<img
 						src="/firefox.svg"
 						alt="Firefox"

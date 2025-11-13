@@ -13,4 +13,7 @@ contextBridge.exposeInMainWorld('electron', {
 	shutdown: () => {
 		ipcRenderer.send('shutdown');
 	},
+	runCommand: (command) => {
+		ipcRenderer.send('run-command', command);
+	},
 });
