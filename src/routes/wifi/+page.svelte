@@ -3,6 +3,7 @@
 	import * as Item from '$lib/components/ui/item';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
@@ -269,7 +270,12 @@
 								disabled={!password || connecting}
 								class="flex-1"
 							>
-								{connecting ? 'Connecting...' : 'Connect'}
+								{#if connecting}
+									<Spinner class="mr-2" />
+									Connecting...
+								{:else}
+									Connect
+								{/if}
 							</Button>
 						</div>
 					</Card.Content>
