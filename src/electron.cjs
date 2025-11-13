@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
+const { exec } = require('child_process');
 const path = require('path');
 
 // Try to require electron-context-menu safely
@@ -86,4 +87,14 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('to-main', (event, count) => {
 	return mainWindow.webContents.send('from-main', `next count is ${count + 1}`);
+});
+
+ipcMain.on('shutdown', (event) => {
+	exec('sudo poweroff', (error, stdout, stderr) => {
+		if (error) {
+			console.error('Shutdown error:', error);
+			return;
+		}
+		console.log('Shutdown command executed successfully');
+	});
 });

@@ -1,6 +1,14 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
+
+	function handleShutdown() {
+		if (window.electron) {
+			window.electron.shutdown();
+		} else {
+			console.log('Electron API not available');
+		}
+	}
 </script>
 
 <main>
@@ -140,7 +148,7 @@
 				<Item.Description>Shut down the system safely.</Item.Description>
 			</Item.Content>
 			<Item.Actions>
-				<button>
+				<button on:click={handleShutdown}>
 					<img
 						src="/shutdown.svg"
 						alt="System Shutdown"
