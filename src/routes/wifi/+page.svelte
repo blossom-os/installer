@@ -37,9 +37,13 @@
 				const result = await window.electron.scanWifi();
 				allNetworks = result || [];
 
-				// Check for current connection
-				const connectedNetwork = allNetworks.find((n) => n.connected);
-				currentConnection = connectedNetwork ? connectedNetwork.ssid : null;
+				// Get current connection separately
+				currentConnection = await window.electron.getCurrentWifi();
+
+				// Check connection status for each network individually
+				for (const network of allNetworks) {
+					network.connected = await window.electron.checkNetworkConnection(network.ssid);
+				}
 
 				// Limit displayed networks
 				networks = showAllNetworks

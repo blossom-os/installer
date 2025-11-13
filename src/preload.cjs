@@ -25,6 +25,12 @@ contextBridge.exposeInMainWorld('electron', {
 	checkSavedWifiConfig: (ssid) => {
 		return ipcRenderer.invoke('check-saved-wifi-config', ssid);
 	},
+	checkNetworkConnection: (ssid) => {
+		return ipcRenderer.invoke('check-network-connection', ssid);
+	},
+	getCurrentWifi: () => {
+		return ipcRenderer.invoke('get-current-wifi');
+	},
 	navigate: (path) => {
 		window.location.hash = path;
 	},

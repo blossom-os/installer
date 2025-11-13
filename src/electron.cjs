@@ -114,7 +114,7 @@ ipcMain.on('run-command', (event, command) => {
 // WiFi scanning handler
 ipcMain.handle('scan-wifi', async (event) => {
 	return new Promise((resolve, reject) => {
-		exec('nmcli -t -f SSID,SIGNAL,SECURITY,ACTIVE dev wifi', (error, stdout, stderr) => {
+		exec('nmcli -t -f SSID,SIGNAL,SECURITY dev wifi', (error, stdout, stderr) => {
 			if (error) {
 				console.error('WiFi scan error:', error);
 				resolve([]);
@@ -126,7 +126,7 @@ ipcMain.handle('scan-wifi', async (event) => {
 			
 			for (const line of lines) {
 				if (!line) continue;
-				const [ssid, signal, security, active] = line.split(':');
+				const [ssid, signal, security] = line.split(':');
 				
 				if (ssid && ssid !== '--') {
 					let securityType = 'open';
@@ -138,7 +138,7 @@ ipcMain.handle('scan-wifi', async (event) => {
 						ssid,
 						signal: parseInt(signal) || 0,
 						security: securityType,
-						connected: active === 'yes',
+						connected: false, // Will be checked individually
 						bssid: ''
 					});
 				}
@@ -157,6 +157,52 @@ ipcMain.handle('scan-wifi', async (event) => {
 			}, []);
 			
 			resolve(uniqueNetworks.sort((a, b) => b.signal - a.signal));
+		});
+	});
+});
+
+// Check connection status for a specific network
+ipcMain.handle('check-network-connection', async (event, ssid) => {
+	return new Promise((resolve) => {
+		exec(`nmcli -t -f NAME,DEVICE connection show --active`, (error, stdout, stderr) => {
+			if (error) {
+				resolve(false);
+				return;
+			}
+			
+			const activeConnections = stdout.trim().split('\n');
+			for (const connection of activeConnections) {
+				const [name, device] = connection.split(':');
+				// Check if this is the SSID we're looking for and it's on a WiFi device
+				if (name === ssid && device && device.startsWith('wl')) {
+					resolve(true);
+					return;
+				}
+			}
+			resolve(false);
+		});
+	});
+});
+
+// Get currently connected WiFi network
+ipcMain.handle('get-current-wifi', async (event) => {
+	return new Promise((resolve) => {
+		exec(`nmcli -t -f NAME,TYPE,DEVICE connection show --active`, (error, stdout, stderr) => {
+			if (error) {
+				resolve(null);
+				return;
+			}
+			
+			const activeConnections = stdout.trim().split('\n');
+			for (const connection of activeConnections) {
+				const [name, type, device] = connection.split(':');
+				// Look for WiFi connections (type 802-11-wireless or device starting with wl)
+				if ((type === '802-11-wireless' || (device && device.startsWith('wl'))) && name) {
+					resolve(name);
+					return;
+				}
+			}
+			resolve(null);
 		});
 	});
 });
