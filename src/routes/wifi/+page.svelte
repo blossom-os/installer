@@ -2,8 +2,6 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Item from '$lib/components/ui/item';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
@@ -20,9 +18,6 @@
 	let showAllNetworks = false;
 	let scanning = false;
 	let connecting = false;
-	let selectedNetwork: WiFiNetwork | null = null;
-	let password = '';
-	let showPasswordInput = false;
 	let currentConnection: string | null = null;
 
 	const MAX_DISPLAYED_NETWORKS = 5;
@@ -80,45 +75,20 @@
 				}
 			}
 
-			// If no saved config, show password input for secured networks
+			// If no saved config, navigate to password entry for secured networks
 			connecting = false;
-			selectedNetwork = network;
-			showPasswordInput = true;
+			goto(
+				`/wifi/connect?ssid=${encodeURIComponent(network.ssid)}&security=${encodeURIComponent(network.security)}`,
+			);
 		} catch (error) {
 			console.error('Failed to connect:', error);
 			connecting = false;
-		}
-	}
-
-	async function connectWithPassword() {
-		if (!selectedNetwork || !password) return;
-
-		connecting = true;
-		try {
-			if (window.electron) {
-				await window.electron.connectWifi(selectedNetwork.ssid, password);
-			}
-		} catch (error) {
-			console.error('Failed to connect:', error);
-		} finally {
-			connecting = false;
-			showPasswordInput = false;
-			selectedNetwork = null;
-			password = '';
-			// Refresh the network list
-			scanNetworks();
 		}
 	}
 
 	function toggleShowAllNetworks() {
 		showAllNetworks = !showAllNetworks;
 		networks = showAllNetworks ? allNetworks : allNetworks.slice(0, MAX_DISPLAYED_NETWORKS);
-	}
-
-	function cancelConnection() {
-		showPasswordInput = false;
-		selectedNetwork = null;
-		password = '';
 	}
 
 	function getSecurityText(security: string): string {
@@ -235,52 +205,4 @@
 			{/if}
 		{/if}
 	</Card.Content>
-
-	{#if showPasswordInput && selectedNetwork}
-		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
-				<Card.Root class="border-0 shadow-none">
-					<Card.Header>
-						<Card.Title>Connect to {selectedNetwork.ssid}</Card.Title>
-						<Card.Description>
-							This network is secured with {getSecurityText(
-								selectedNetwork.security,
-							)}. Please enter the password.
-						</Card.Description>
-					</Card.Header>
-					<Card.Content>
-						<Input
-							type="password"
-							bind:value={password}
-							placeholder="Enter network password"
-							class="mb-4"
-							onkeydown={(e) => e.key === 'Enter' && connectWithPassword()}
-						/>
-						<div class="flex gap-2">
-							<Button
-								variant="outline"
-								onclick={cancelConnection}
-								disabled={connecting}
-								class="flex-1"
-							>
-								Cancel
-							</Button>
-							<Button
-								onclick={connectWithPassword}
-								disabled={!password || connecting}
-								class="flex-1"
-							>
-								{#if connecting}
-									<Spinner class="mr-2" />
-									Connecting...
-								{:else}
-									Connect
-								{/if}
-							</Button>
-						</div>
-					</Card.Content>
-				</Card.Root>
-			</div>
-		</div>
-	{/if}
 </main>
