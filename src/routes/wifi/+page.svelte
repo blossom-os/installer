@@ -81,26 +81,17 @@
 		}
 	}
 
-	function getSecurityText(security: string): string {
-		switch (security) {
-			case 'open':
-				return 'Open';
-			case 'wpa':
-				return 'WPA';
-			case 'wpa2':
-				return 'WPA2';
-			case 'wpa3':
-				return 'WPA3';
-			default:
-				return 'Unknown';
+	function getSignalIcon(signal: number, secure: boolean): string {
+		if (secure) {
+			if (signal > 90) return 'high-sec';
+			if (signal > 50) return 'mid-sec';
+			if (signal > 25) return 'low-sec';
+		} else {
+			if (signal > 90) return 'high';
+			if (signal > 50) return 'mid';
+			if (signal > 25) return 'low';
 		}
-	}
-
-	function getSignalIcon(signal: number): string {
-		if (signal > 75) return '📶';
-		if (signal > 50) return '📶';
-		if (signal > 25) return '📶';
-		return '📶';
+		return '';
 	}
 
 	onMount(() => {
@@ -163,16 +154,7 @@
 							<Item.Content>
 								<Item.Title class="flex items-center justify-between">
 									<span>{network.ssid}</span>
-									<span class="text-sm font-normal">
-										{getSignalIcon(network.signal)}
-										{network.signal}%
-									</span>
 								</Item.Title>
-								<Item.Description
-									class="text-left flex items-center justify-between"
-								>
-									<span>{getSecurityText(network.security)}</span>
-								</Item.Description>
 							</Item.Content>
 							<Item.Actions>
 								{#if network.connected}
@@ -180,38 +162,16 @@
 										Connected
 									</span>
 								{:else if network.security === 'open'}
-									<span class="text-xs text-gray-500">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke-width="1.5"
-											stroke="currentColor"
-											class="size-6"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-											/>
-										</svg>
-									</span>
+									<span class="text-xs text-gray-500">Open</span>
 								{:else}
 									<span class="text-xs text-gray-500">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke-width="1.5"
-											stroke="currentColor"
-											class="size-6"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-											/>
-										</svg>
+										<img
+											src={`/wifi/${getSignalIcon(network.signal, true)}.svg`}
+											alt="Signal Strength"
+											width="16"
+											height="16"
+											class="inline-block mr-1"
+										/>
 									</span>
 								{/if}
 							</Item.Actions>
