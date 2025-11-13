@@ -185,3 +185,19 @@ ipcMain.handle('connect-wifi', async (event, ssid, password) => {
 		});
 	});
 });
+
+// Check for saved WiFi configuration
+ipcMain.handle('check-saved-wifi-config', async (event, ssid) => {
+	return new Promise((resolve) => {
+		exec(`nmcli -t -f NAME connection show | grep "^${ssid}$"`, (error, stdout, stderr) => {
+			if (error) {
+				// No saved configuration found
+				resolve(false);
+				return;
+			}
+			
+			// Found saved configuration
+			resolve(stdout.trim() === ssid);
+		});
+	});
+});
