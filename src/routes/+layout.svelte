@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import '../app.css';
 
 	let ready: boolean = false;
 	onMount(() => (ready = true));
@@ -7,9 +9,13 @@
 
 <div class="dragbar"></div>
 
-{#if ready}
-	<slot />
-{/if}
+<Card.Root>
+	<Card.Content>
+		{#if ready}
+			<slot />
+		{/if}
+	</Card.Content>
+</Card.Root>
 
 <style>
 	.dragbar {

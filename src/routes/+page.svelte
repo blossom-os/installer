@@ -1,58 +1,155 @@
 <script lang="ts">
-	import Counter from '$lib/Counter.svelte';
-	import Logo from '$lib/Logo.svelte';
-	import { browser } from '$app/environment';
-
-	let desktop: string;
-
-	if (window.electron && browser) {
-		window.electron.receive('from-main', (data: any) => {
-			desktop = `Received Message "${data}" from Electron`;
-			console.log(desktop);
-		});
-	}
-
-	const agent = window.electron ? 'Electron' : 'Browser';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Item from '$lib/components/ui/item/index.js';
 </script>
 
 <main>
-	<Logo />
-
-	<h1>Hello {agent}!</h1>
-
-	<Counter id="0" {agent} />
-
-	{#if desktop}
-		<br />
-		<br />
-		{desktop}
-	{/if}
+	<Card.Header class="mt-4">
+		<Card.Title>blossomOS Recovery Environment</Card.Title>
+		<Card.Description class="mt-2 text-muted-foreground">
+			This is the blossomOS recovery environment where you can reinstall the operating system
+			or perform system recovery tasks.
+		</Card.Description>
+	</Card.Header>
+	<Card.Content class="mt-6">
+		<Item.Root class="cursor-pointer">
+			<Item.Media />
+			<Item.Content>
+				<Item.Title>Install blossomOS</Item.Title>
+				<Item.Description>
+					Launch the blossomOS installer to install the operating system.
+				</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<button>
+					<img
+						src="/installer.svg"
+						alt="Install blossomOS"
+						width="64"
+						height="64"
+						class="cursor-pointer"
+					/>
+				</button>
+			</Item.Actions>
+		</Item.Root>
+		<Item.Root class="cursor-pointer">
+			<Item.Media />
+			<Item.Content>
+				<Item.Title>Partition Manager</Item.Title>
+				<Item.Description>
+					Launch the partition manager to manage disk partitions and format drives.
+				</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<button>
+					<img
+						src="/gparted.svg"
+						alt="Partition Manager"
+						width="64"
+						height="64"
+						class="cursor-pointer"
+					/>
+				</button>
+			</Item.Actions>
+		</Item.Root>
+		<Item.Root class="cursor-pointer">
+			<Item.Media />
+			<Item.Content>
+				<Item.Title>Backup and Restore</Item.Title>
+				<Item.Description>
+					Access Timeshift to create or restore system backups.
+				</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<button>
+					<img
+						src="/backup.svg"
+						alt="Backup and Restore"
+						width="64"
+						height="64"
+						class="cursor-pointer"
+					/>
+				</button>
+			</Item.Actions>
+		</Item.Root>
+		<Item.Root class="cursor-pointer">
+			<Item.Media />
+			<Item.Content>
+				<Item.Title>Terminal</Item.Title>
+				<Item.Description>
+					Open a terminal to perform advanced system recovery tasks using command-line
+					tools.
+				</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<button>
+					<img
+						src="/terminal.svg"
+						alt="System Terminal"
+						width="64"
+						height="64"
+						class="cursor-pointer"
+					/>
+				</button>
+			</Item.Actions>
+		</Item.Root>
+		<Item.Root class="cursor-pointer">
+			<Item.Media />
+			<Item.Content>
+				<Item.Title>Firefox</Item.Title>
+				<Item.Description>
+					Launch the Firefox web browser to access online help and resources.
+				</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<button>
+					<img
+						src="/firefox.svg"
+						alt="Firefox"
+						width="64"
+						height="64"
+						class="cursor-pointer"
+					/>
+				</button>
+			</Item.Actions>
+		</Item.Root>
+		<Item.Root class="cursor-pointer">
+			<Item.Media />
+			<Item.Content>
+				<Item.Title>WiFi Manager</Item.Title>
+				<Item.Description>
+					Open the WiFi manager to connect to wireless networks.
+				</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<button>
+					<img
+						src="/wifi.svg"
+						alt="WiFi Manager"
+						width="64"
+						height="64"
+						class="cursor-pointer"
+					/>
+				</button>
+			</Item.Actions>
+		</Item.Root>
+		<Item.Root class="cursor-pointer">
+			<Item.Media />
+			<Item.Content>
+				<Item.Title>Shutdown</Item.Title>
+				<Item.Description>Shut down the system safely.</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<button>
+					<img
+						src="/shutdown.svg"
+						alt="System Shutdown"
+						width="64"
+						height="64"
+						class="cursor-pointer"
+					/>
+				</button>
+			</Item.Actions>
+		</Item.Root>
+	</Card.Content>
 </main>
-
-<style>
-	:root {
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-			Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-	}
-
-	:global(body) {
-		margin: 0;
-		padding: 0;
-	}
-
-	main {
-		padding: 2em 1em 1em 1em;
-		text-align: center;
-		animation: fade 1s;
-		margin: 0 auto;
-	}
-
-	@keyframes fade {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-</style>

@@ -1,6 +1,6 @@
 {
-	"appId": "com.example.app",
-	"productName": "Sveltekit Electron",
+	"appId": "com.blossomos.installer",
+	"productName": "blossomos-installer",
 	"directories": {
 		"output": "dist"
 	},
@@ -11,5 +11,14 @@
 			"from": "build",
 			"to": ""
 		}
-	]
+	],
+	"linux": {
+		"target": [
+			{
+				"target": "pacman",
+				"arch": ["x64"]
+			}
+		],
+		"category": "Utility"
+	}
 }

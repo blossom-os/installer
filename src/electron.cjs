@@ -1,4 +1,3 @@
-const windowStateManager = require('electron-window-state');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
@@ -23,21 +22,16 @@ const dev = !app.isPackaged;
 let mainWindow;
 
 function createWindow() {
-	let windowState = windowStateManager({
-		defaultWidth: 800,
-		defaultHeight: 600,
-	});
 
 	const mainWindow = new BrowserWindow({
-		backgroundColor: 'whitesmoke',
 		titleBarStyle: 'hidden',
 		autoHideMenuBar: true,
 		trafficLightPosition: {
 			x: 17,
 			y: 32,
 		},
-		minHeight: 450,
-		minWidth: 500,
+		width: 800,
+		height: 900,
 		webPreferences: {
 			enableRemoteModule: true,
 			contextIsolation: true,
@@ -46,36 +40,17 @@ function createWindow() {
 			devTools: dev,
 			preload: path.join(__dirname, 'preload.cjs'),
 		},
-		x: windowState.x,
-		y: windowState.y,
-		width: windowState.width,
-		height: windowState.height,
+		frame: false,
+		transparent: true,
 	});
-
-	windowState.manage(mainWindow);
 
 	mainWindow.once('ready-to-show', () => {
 		mainWindow.show();
 		mainWindow.focus();
 	});
 
-	mainWindow.on('close', () => {
-		windowState.saveState(mainWindow);
-	});
-
 	return mainWindow;
 }
-
-contextMenu({
-	showLookUpSelection: false,
-	showSearchWithGoogle: false,
-	showCopyImage: false,
-	prepend: (defaultActions, params, browserWindow) => [
-		{
-			label: 'Make App 💻',
-		},
-	],
-});
 
 function loadVite(port) {
 	mainWindow.loadURL(`http://localhost:${port}`).catch((e) => {

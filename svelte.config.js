@@ -14,7 +14,8 @@ const config = {
 		prerender: { entries: [] },
 		alias: {
 			$lib: 'src/lib',
-			'$lib/*': 'src/lib/*'
+			'$lib/*': 'src/lib/*',
+			 "@/*": "src/lib/*",
 		}
 	},
 
