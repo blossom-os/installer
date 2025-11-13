@@ -15,12 +15,9 @@
 
 	let networks: WiFiNetwork[] = [];
 	let allNetworks: WiFiNetwork[] = [];
-	let showAllNetworks = false;
 	let scanning = false;
 	let connecting = false;
 	let currentConnection: string | null = null;
-
-	const MAX_DISPLAYED_NETWORKS = 5;
 
 	function handleBack() {
 		goto('/');
@@ -42,9 +39,7 @@
 				}
 
 				// Limit displayed networks
-				networks = showAllNetworks
-					? allNetworks
-					: allNetworks.slice(0, MAX_DISPLAYED_NETWORKS);
+				networks = allNetworks;
 			}
 		} catch (error) {
 			console.error('Failed to scan networks:', error);
@@ -84,11 +79,6 @@
 			console.error('Failed to connect:', error);
 			connecting = false;
 		}
-	}
-
-	function toggleShowAllNetworks() {
-		showAllNetworks = !showAllNetworks;
-		networks = showAllNetworks ? allNetworks : allNetworks.slice(0, MAX_DISPLAYED_NETWORKS);
 	}
 
 	function getSecurityText(security: string): string {
@@ -150,24 +140,7 @@
 		<div class="flex justify-between items-center mb-4">
 			<h3 class="text-lg font-semibold">Available Networks</h3>
 			<Button onclick={scanNetworks} disabled={scanning} variant="default">
-				{#if scanning}
-					Scanning...
-				{:else}
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						stroke="currentColor"
-						class="size-6"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-						/>
-					</svg>
-				{/if}
+				{scanning ? 'Scanning' : 'Refresh'}
 			</Button>
 		</div>
 
@@ -178,78 +151,74 @@
 		{:else if scanning}
 			<div class="text-center py-8 text-gray-500">Scanning for networks...</div>
 		{:else}
-			{#each networks as network}
-				<button
-					on:click={() => connectToNetwork(network)}
-					disabled={connecting}
-					class="block w-full mb-2"
-				>
-					<Item.Root class="cursor-pointer">
-						<Item.Media />
-						<Item.Content>
-							<Item.Title class="flex items-center justify-between">
-								<span>{network.ssid}</span>
-								<span class="text-sm font-normal">
-									{getSignalIcon(network.signal)}
-									{network.signal}%
-								</span>
-							</Item.Title>
-							<Item.Description class="text-left flex items-center justify-between">
-								<span>{getSecurityText(network.security)}</span>
-							</Item.Description>
-						</Item.Content>
-						<Item.Actions>
-							{#if network.connected}
-								<span class="text-green-600 text-sm font-medium">Connected</span>
-							{:else if network.security === 'open'}
-								<span class="text-xs text-gray-500">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke-width="1.5"
-										stroke="currentColor"
-										class="size-6"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-										/>
-									</svg>
-								</span>
-							{:else}
-								<span class="text-xs text-gray-500">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke-width="1.5"
-										stroke="currentColor"
-										class="size-6"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-										/>
-									</svg>
-								</span>
-							{/if}
-						</Item.Actions>
-					</Item.Root>
-				</button>
-			{/each}
-
-			{#if allNetworks.length > MAX_DISPLAYED_NETWORKS}
-				<div class="text-center mt-4">
-					<Button variant="outline" onclick={toggleShowAllNetworks} class="w-full">
-						{showAllNetworks
-							? `Show Less (${MAX_DISPLAYED_NETWORKS} of ${allNetworks.length})`
-							: `Show More (${allNetworks.length - MAX_DISPLAYED_NETWORKS} more)`}
-					</Button>
-				</div>
-			{/if}
+			<div class="max-h-96 overflow-y-auto pr-2">
+				{#each networks as network}
+					<button
+						on:click={() => connectToNetwork(network)}
+						disabled={connecting}
+						class="block w-full mb-2"
+					>
+						<Item.Root class="cursor-pointer">
+							<Item.Media />
+							<Item.Content>
+								<Item.Title class="flex items-center justify-between">
+									<span>{network.ssid}</span>
+									<span class="text-sm font-normal">
+										{getSignalIcon(network.signal)}
+										{network.signal}%
+									</span>
+								</Item.Title>
+								<Item.Description
+									class="text-left flex items-center justify-between"
+								>
+									<span>{getSecurityText(network.security)}</span>
+								</Item.Description>
+							</Item.Content>
+							<Item.Actions>
+								{#if network.connected}
+									<span class="text-green-600 text-sm font-medium">
+										Connected
+									</span>
+								{:else if network.security === 'open'}
+									<span class="text-xs text-gray-500">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke-width="1.5"
+											stroke="currentColor"
+											class="size-6"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+											/>
+										</svg>
+									</span>
+								{:else}
+									<span class="text-xs text-gray-500">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke-width="1.5"
+											stroke="currentColor"
+											class="size-6"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+											/>
+										</svg>
+									</span>
+								{/if}
+							</Item.Actions>
+						</Item.Root>
+					</button>
+				{/each}
+			</div>
 		{/if}
 	</Card.Content>
 </main>
