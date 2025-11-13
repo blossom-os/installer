@@ -176,43 +176,43 @@
 				</button>
 			{/each}
 		{/if}
-	</Card.Content>
 
-	{#if showPasswordInput && selectedNetwork}
-		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-				<h3 class="text-lg font-semibold mb-4">
-					Connect to {selectedNetwork.ssid}
-				</h3>
-				<p class="text-sm text-gray-600 mb-4">
-					This network is secured with {getSecurityText(selectedNetwork.security)}. Please
-					enter the password.
-				</p>
-				<Input
-					type="password"
-					bind:value={password}
-					placeholder="Enter network password"
-					class="mb-4"
-					onkeydown={(e) => e.key === 'Enter' && connectWithPassword()}
-				/>
-				<div class="flex gap-2">
-					<Button
-						variant="outline"
-						onclick={cancelConnection}
-						disabled={connecting}
-						class="flex-1"
-					>
-						Cancel
-					</Button>
-					<Button
-						onclick={connectWithPassword}
-						disabled={!password || connecting}
-						class="flex-1"
-					>
-						{connecting ? 'Connecting...' : 'Connect'}
-					</Button>
-				</div>
-			</div>
-		</div>
-	{/if}
+		{#if showPasswordInput && selectedNetwork}
+			<Card.Root class="mt-6">
+				<Card.Header>
+					<Card.Title>Connect to {selectedNetwork.ssid}</Card.Title>
+					<Card.Description>
+						This network is secured with {getSecurityText(selectedNetwork.security)}.
+						Please enter the password.
+					</Card.Description>
+				</Card.Header>
+				<Card.Content>
+					<Input
+						type="password"
+						bind:value={password}
+						placeholder="Enter network password"
+						class="mb-4"
+						onkeydown={(e) => e.key === 'Enter' && connectWithPassword()}
+					/>
+					<div class="flex gap-2">
+						<Button
+							variant="outline"
+							onclick={cancelConnection}
+							disabled={connecting}
+							class="flex-1"
+						>
+							Cancel
+						</Button>
+						<Button
+							onclick={connectWithPassword}
+							disabled={!password || connecting}
+							class="flex-1"
+						>
+							{connecting ? 'Connecting...' : 'Connect'}
+						</Button>
+					</div>
+				</Card.Content>
+			</Card.Root>
+		{/if}
+	</Card.Content>
 </main>
