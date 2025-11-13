@@ -81,22 +81,6 @@
 <main>
 	<Card.Header class="mt-4">
 		<div class="flex items-center gap-4">
-			<Button variant="outline" onclick={handleBack}>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke-width="1.5"
-					stroke="currentColor"
-					class="size-6"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M15.75 19.5 8.25 12l7.5-7.5"
-					/>
-				</svg>
-			</Button>
 			<div>
 				<Card.Title>Connect to {ssid}</Card.Title>
 				<Card.Description class="mt-2 text-muted-foreground">
