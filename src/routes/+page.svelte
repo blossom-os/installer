@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
 
@@ -40,6 +41,10 @@
 		} else {
 			console.log('Electron API not available');
 		}
+	}
+
+	function handleWifi() {
+		goto('/wifi');
 	}
 </script>
 
@@ -153,16 +158,16 @@
 				</Item.Actions>
 			</Item.Root>
 		</button>
-		<Item.Root class="cursor-pointer">
-			<Item.Media />
-			<Item.Content>
-				<Item.Title>WiFi Manager</Item.Title>
-				<Item.Description>
-					Open the WiFi manager to connect to wireless networks.
-				</Item.Description>
-			</Item.Content>
-			<Item.Actions>
-				<button>
+		<button on:click={handleWifi} class="block w-full">
+			<Item.Root class="cursor-pointer">
+				<Item.Media />
+				<Item.Content>
+					<Item.Title>WiFi Manager</Item.Title>
+					<Item.Description class="text-left">
+						Open the WiFi manager to connect to wireless networks.
+					</Item.Description>
+				</Item.Content>
+				<Item.Actions>
 					<img
 						src="/wifi.svg"
 						alt="WiFi Manager"
@@ -170,9 +175,9 @@
 						height="48"
 						class="cursor-pointer"
 					/>
-				</button>
-			</Item.Actions>
-		</Item.Root>
+				</Item.Actions>
+			</Item.Root>
+		</button>
 		<button on:click={handleShutdown} class="block w-full">
 			<Item.Root class="cursor-pointer">
 				<Item.Media />

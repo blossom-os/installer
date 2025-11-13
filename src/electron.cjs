@@ -110,3 +110,78 @@ ipcMain.on('run-command', (event, command) => {
 		if (stderr) console.log('stderr:', stderr);
 	});
 });
+
+// WiFi scanning handler
+ipcMain.handle('scan-wifi', async (event) => {
+	return new Promise((resolve, reject) => {
+		exec('nmcli -t -f SSID,SIGNAL,SECURITY,ACTIVE dev wifi', (error, stdout, stderr) => {
+			if (error) {
+				console.error('WiFi scan error:', error);
+				resolve([]);
+				return;
+			}
+			
+			const networks = [];
+			const lines = stdout.trim().split('\n');
+			
+			for (const line of lines) {
+				if (!line) continue;
+				const [ssid, signal, security, active] = line.split(':');
+				
+				if (ssid && ssid !== '--') {
+					let securityType = 'open';
+					if (security.includes('WPA3')) securityType = 'wpa3';
+					else if (security.includes('WPA2')) securityType = 'wpa2';
+					else if (security.includes('WPA')) securityType = 'wpa';
+					
+					networks.push({
+						ssid,
+						signal: parseInt(signal) || 0,
+						security: securityType,
+						connected: active === 'yes',
+						bssid: ''
+					});
+				}
+			}
+			
+			// Remove duplicates and sort by signal strength
+			const uniqueNetworks = networks.reduce((acc, network) => {
+				const existing = acc.find(n => n.ssid === network.ssid);
+				if (!existing || network.signal > existing.signal) {
+					if (existing) {
+						acc.splice(acc.indexOf(existing), 1);
+					}
+					acc.push(network);
+				}
+				return acc;
+			}, []);
+			
+			resolve(uniqueNetworks.sort((a, b) => b.signal - a.signal));
+		});
+	});
+});
+
+// WiFi connection handler
+ipcMain.handle('connect-wifi', async (event, ssid, password) => {
+	return new Promise((resolve, reject) => {
+		let command;
+		if (password) {
+			// For secured networks
+			command = `nmcli dev wifi connect "${ssid}" password "${password}"`;
+		} else {
+			// For open networks
+			command = `nmcli dev wifi connect "${ssid}"`;
+		}
+		
+		exec(command, (error, stdout, stderr) => {
+			if (error) {
+				console.error('WiFi connection error:', error);
+				reject(error);
+				return;
+			}
+			
+			console.log(`Successfully connected to ${ssid}`);
+			resolve({ success: true, message: `Connected to ${ssid}` });
+		});
+	});
+});

@@ -16,4 +16,13 @@ contextBridge.exposeInMainWorld('electron', {
 	runCommand: (command) => {
 		ipcRenderer.send('run-command', command);
 	},
+	scanWifi: () => {
+		return ipcRenderer.invoke('scan-wifi');
+	},
+	connectWifi: (ssid, password) => {
+		return ipcRenderer.invoke('connect-wifi', ssid, password);
+	},
+	navigate: (path) => {
+		window.location.hash = path;
+	},
 });
