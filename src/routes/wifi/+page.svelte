@@ -176,17 +176,6 @@
 	</Card.Header>
 
 	<Card.Content class="mt-6">
-		{#if currentConnection}
-			<div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-				<div class="flex items-center gap-2">
-					<div class="w-2 h-2 bg-green-500 rounded-full"></div>
-					<span class="text-sm font-medium text-green-700">
-						Connected to {currentConnection}
-					</span>
-				</div>
-			</div>
-		{/if}
-
 		<div class="flex justify-between items-center mb-4">
 			<h3 class="text-lg font-semibold">Available Networks</h3>
 			<Button onclick={scanNetworks} disabled={scanning} variant="default">
@@ -219,9 +208,6 @@
 							</Item.Title>
 							<Item.Description class="text-left flex items-center justify-between">
 								<span>{getSecurityText(network.security)}</span>
-								{#if network.connected}
-									<span class="text-green-600 text-sm">Connected</span>
-								{/if}
 							</Item.Description>
 						</Item.Content>
 						<Item.Actions>
