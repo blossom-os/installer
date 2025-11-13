@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld('electron', {
 	checkSavedWifiConfig: (ssid) => {
 		return ipcRenderer.invoke('check-saved-wifi-config', ssid);
 	},
+	deleteWifiConfig: (ssid) => {
+		return ipcRenderer.invoke('delete-wifi-config', ssid);
+	},
 	checkNetworkConnection: (ssid) => {
 		return ipcRenderer.invoke('check-network-connection', ssid);
 	},

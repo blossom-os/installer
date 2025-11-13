@@ -11,6 +11,8 @@
 	let connecting = false;
 	let ssid = '';
 	let security = '';
+	let error = '';
+	let showError = false;
 
 	onMount(() => {
 		// Get network details from URL params
@@ -31,14 +33,30 @@
 		if (!ssid || !password) return;
 
 		connecting = true;
+		showError = false;
+		error = '';
+
 		try {
 			if (window.electron) {
 				await window.electron.connectWifi(ssid, password);
 				// Go back to WiFi list after successful connection
 				goto('/wifi');
 			}
-		} catch (error) {
-			console.error('Failed to connect:', error);
+		} catch (err: any) {
+			console.error('Failed to connect:', err);
+
+			// Handle different types of errors
+			if (err.isPasswordError) {
+				error = 'Incorrect password. Please check your password and try again.';
+				// Delete the failed connection configuration
+				if (window.electron) {
+					await window.electron.deleteWifiConfig(ssid);
+				}
+			} else {
+				error = 'Failed to connect to the network. Please try again.';
+			}
+
+			showError = true;
 		} finally {
 			connecting = false;
 		}
@@ -90,6 +108,15 @@
 
 	<Card.Content class="mt-6">
 		<div class="space-y-4">
+			{#if showError}
+				<div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+					<div class="flex items-center gap-2">
+						<div class="w-2 h-2 bg-red-500 rounded-full"></div>
+						<span class="text-sm font-medium text-red-700">{error}</span>
+					</div>
+				</div>
+			{/if}
+
 			<div>
 				<label
 					for="password"

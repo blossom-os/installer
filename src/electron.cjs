@@ -222,7 +222,17 @@ ipcMain.handle('connect-wifi', async (event, ssid, password) => {
 		exec(command, (error, stdout, stderr) => {
 			if (error) {
 				console.error('WiFi connection error:', error);
-				reject(error);
+				// Check if it's a password error
+				const isPasswordError = stderr.includes('Secrets were required') || 
+									   stderr.includes('802-1x authentication') ||
+									   stderr.includes('No suitable device found') ||
+									   error.message.includes('Secrets were required');
+				
+				reject({ 
+					error: error.message, 
+					isPasswordError,
+					stderr: stderr || ''
+				});
 				return;
 			}
 			
@@ -244,6 +254,22 @@ ipcMain.handle('check-saved-wifi-config', async (event, ssid) => {
 			
 			// Found saved configuration
 			resolve(stdout.trim() === ssid);
+		});
+	});
+});
+
+// Delete WiFi connection configuration
+ipcMain.handle('delete-wifi-config', async (event, ssid) => {
+	return new Promise((resolve) => {
+		exec(`nmcli connection delete "${ssid}"`, (error, stdout, stderr) => {
+			if (error) {
+				console.error('Failed to delete WiFi config:', error);
+				resolve(false);
+				return;
+			}
+			
+			console.log(`Deleted WiFi configuration for ${ssid}`);
+			resolve(true);
 		});
 	});
 });
