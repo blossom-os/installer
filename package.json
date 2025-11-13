@@ -5,7 +5,7 @@
 	"description": "An installer application for blossomOS",
 	"main": "src/electron.cjs",
 	"type": "module",
-	"author": "blossomOS Team",
+	"author": "blossomOS Team <support@blossom-os.com> (https://blossom-os.com)",
 	"scripts": {
 		"dev": "cross-env NODE_ENV=dev bun run dev:all",
 		"dev:all": "concurrently -n=svelte,electron -c='#ff3e00',blue \"bun run dev:svelte\" \"bun run dev:electron\"",
