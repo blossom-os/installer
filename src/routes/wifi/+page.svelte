@@ -222,7 +222,7 @@
 						</Item.Content>
 						<Item.Actions>
 							{#if network.connected}
-								<div class="w-4 h-4 bg-green-500 rounded-full"></div>
+								<span class="text-green-600 text-sm font-medium">Connected</span>
 							{:else if network.security === 'open'}
 								<span class="text-xs text-gray-500">Click to connect</span>
 							{:else}
