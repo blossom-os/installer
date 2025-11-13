@@ -69,8 +69,8 @@ function createMainWindow() {
 
 	if (dev) loadVite(port);
 	else {
-		// Load the built app
-		mainWindow.loadFile(path.join(__dirname, '../build/index.html'));
+		// Load the built app from the build directory
+		mainWindow.loadFile(path.join(__dirname, '../index.html'));
 	}
 }
 
