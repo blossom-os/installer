@@ -736,8 +736,8 @@ linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
 options root=${rootPartition} rootflags=subvol=@ rw quiet`;
 
-	await execPromiseWithSudo(
-		`echo -e '${bootEntry}' | tee /mnt/boot/loader/entries/blossomos.conf`,
+	await execPromise(
+		`echo -e '${bootEntry}' | sudo tee /mnt/boot/loader/entries/blossomos.conf`,
 	);
 
 	// Configure loader
@@ -746,7 +746,7 @@ timeout  3
 console-mode max
 editor   no`;
 
-	await execPromiseWithSudo(`echo -e '${loaderConfig}' | tee /mnt/boot/loader/loader.conf`);
+	await execPromise(`echo -e '${loaderConfig}' | sudo tee /mnt/boot/loader/loader.conf`);
 }
 
 async function installGRUB(diskPath) {
