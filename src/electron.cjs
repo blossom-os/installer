@@ -273,3 +273,368 @@ ipcMain.handle('delete-wifi-config', async (event, ssid) => {
 		});
 	});
 });
+
+// Disk scanning handler (filters out USB devices)
+ipcMain.handle('scan-disks', async (event) => {
+	return new Promise((resolve, reject) => {
+		exec('lsblk -J -o NAME,SIZE,MODEL,TYPE,TRAN,MOUNTPOINT,FSTYPE', (error, stdout, stderr) => {
+			if (error) {
+				console.error('Disk scan error:', error);
+				resolve([]);
+				return;
+			}
+			
+			try {
+				const data = JSON.parse(stdout);
+				const disks = [];
+				
+				for (const device of data.blockdevices || []) {
+					// Filter out USB devices and only include physical disks
+					if (device.type === 'disk' && 
+						device.tran !== 'usb' && 
+						!device.name.startsWith('sr') && // CD/DVD drives
+						!device.name.startsWith('loop')) { // Loop devices
+						
+						const partitions = [];
+						if (device.children) {
+							for (const child of device.children) {
+								partitions.push({
+									name: child.name,
+									size: child.size,
+									fstype: child.fstype,
+									mountpoint: child.mountpoint
+								});
+							}
+						}
+						
+						disks.push({
+							name: `/dev/${device.name}`,
+							size: device.size,
+							model: device.model || 'Unknown',
+							type: device.tran === 'nvme' ? 'NVMe' : 
+								  device.model?.toLowerCase().includes('ssd') ? 'SSD' : 'HDD',
+							partitions: partitions
+						});
+					}
+				}
+				
+				resolve(disks);
+			} catch (parseError) {
+				console.error('Failed to parse disk data:', parseError);
+				resolve([]);
+			}
+		});
+	});
+});
+
+// Check if system is UEFI or BIOS
+ipcMain.handle('check-boot-mode', async (event) => {
+	return new Promise((resolve) => {
+		exec('ls /sys/firmware/efi', (error, stdout, stderr) => {
+			resolve(!error); // true if UEFI, false if BIOS
+		});
+	});
+});
+
+// Install blossomOS
+ipcMain.handle('install-system', async (event, diskPath) => {
+	return new Promise(async (resolve, reject) => {
+		try {
+			const isUEFI = await new Promise((res) => {
+				exec('ls /sys/firmware/efi', (error) => res(!error));
+			});
+			
+			// Step 1: Analyze disk and create partitions
+			event.sender.send('installation-progress', { step: 'analyze', progress: 10 });
+			
+			const hasNTFS = await checkForNTFS(diskPath);
+			const hasFreeSpace = await checkFreeSpace(diskPath);
+			
+			let installPartition;
+			if (hasNTFS && hasFreeSpace) {
+				// Install alongside Windows
+				event.sender.send('installation-progress', { step: 'partition-alongside', progress: 20 });
+				installPartition = await createAlongsidePartition(diskPath, isUEFI);
+			} else {
+				// Wipe entire disk
+				event.sender.send('installation-progress', { step: 'partition-wipe', progress: 20 });
+				installPartition = await wipeAndPartition(diskPath, isUEFI);
+			}
+			
+			// Step 2: Format partitions
+			event.sender.send('installation-progress', { step: 'format', progress: 30 });
+			await formatPartitions(installPartition, isUEFI);
+			
+			// Step 3: Mount partitions
+			event.sender.send('installation-progress', { step: 'mount', progress: 40 });
+			await mountPartitions(installPartition, isUEFI);
+			
+			// Step 4: Install base system
+			event.sender.send('installation-progress', { step: 'install-base', progress: 50 });
+			await installBaseSystem();
+			
+			// Step 5: Configure system
+			event.sender.send('installation-progress', { step: 'configure', progress: 70 });
+			await configureSystem();
+			
+			// Step 6: Install bootloader
+			event.sender.send('installation-progress', { step: 'bootloader', progress: 85 });
+			if (isUEFI) {
+				await installEFIBootloader(installPartition.root);
+			} else {
+				await installGRUB(diskPath);
+			}
+			
+			// Step 7: Copy blossomOS files
+			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
+			await copyBlossomFiles();
+			await createPacmanHook();
+			
+			// Step 8: Cleanup
+			event.sender.send('installation-progress', { step: 'cleanup', progress: 100 });
+			await cleanupMounts();
+			
+			resolve({ success: true, message: 'Installation completed successfully!' });
+		} catch (error) {
+			console.error('Installation error:', error);
+			reject({ error: error.message });
+		}
+	});
+});
+
+// Helper functions for installation
+function execPromise(command) {
+	return new Promise((resolve, reject) => {
+		exec(command, (error, stdout, stderr) => {
+			if (error) {
+				reject({ error, stdout, stderr });
+			} else {
+				resolve({ stdout, stderr });
+			}
+		});
+	});
+}
+
+async function checkForNTFS(diskPath) {
+	try {
+		const result = await execPromise(`lsblk -f ${diskPath}`);
+		return result.stdout.includes('ntfs');
+	} catch (error) {
+		return false;
+	}
+}
+
+async function checkFreeSpace(diskPath) {
+	try {
+		const result = await execPromise(`parted ${diskPath} print free`);
+		return result.stdout.includes('Free Space');
+	} catch (error) {
+		return false;
+	}
+}
+
+async function createAlongsidePartition(diskPath, isUEFI) {
+	// Find the end of the last partition and create new ones
+	const partInfo = await execPromise(`parted ${diskPath} print`);
+	
+	// Get the end of the last partition
+	const lines = partInfo.stdout.split('\n');
+	let lastEnd = '50%'; // Fallback to 50% of disk
+	
+	for (const line of lines) {
+		if (line.trim().match(/^\d+\s+/)) {
+			const parts = line.trim().split(/\s+/);
+			if (parts.length >= 3) {
+				lastEnd = parts[2];
+			}
+		}
+	}
+	
+	// Create root partition (BTRFS)
+	await execPromise(`parted ${diskPath} mkpart primary btrfs ${lastEnd} 100%`);
+	
+	// Get partition number
+	const partNum = await getLastPartitionNumber(diskPath);
+	return {
+		root: `${diskPath}${partNum}`,
+		efi: null // Use existing EFI partition
+	};
+}
+
+async function wipeAndPartition(diskPath, isUEFI) {
+	// Wipe the disk
+	await execPromise(`wipefs -a ${diskPath}`);
+	
+	if (isUEFI) {
+		// Create GPT partition table
+		await execPromise(`parted ${diskPath} mklabel gpt`);
+		
+		// Create EFI partition (512MB)
+		await execPromise(`parted ${diskPath} mkpart primary fat32 1MiB 513MiB`);
+		await execPromise(`parted ${diskPath} set 1 esp on`);
+		
+		// Create root partition (rest of disk)
+		await execPromise(`parted ${diskPath} mkpart primary btrfs 513MiB 100%`);
+		
+		return {
+			efi: `${diskPath}1`,
+			root: `${diskPath}2`
+		};
+	} else {
+		// Create MBR partition table
+		await execPromise(`parted ${diskPath} mklabel msdos`);
+		
+		// Create root partition (entire disk)
+		await execPromise(`parted ${diskPath} mkpart primary btrfs 1MiB 100%`);
+		await execPromise(`parted ${diskPath} set 1 boot on`);
+		
+		return {
+			root: `${diskPath}1`,
+			efi: null
+		};
+	}
+}
+
+async function formatPartitions(partitions, isUEFI) {
+	if (isUEFI && partitions.efi) {
+		await execPromise(`mkfs.fat -F32 ${partitions.efi}`);
+	}
+	await execPromise(`mkfs.btrfs -f ${partitions.root}`);
+}
+
+async function mountPartitions(partitions, isUEFI) {
+	// Create mount directories
+	await execPromise(`mkdir -p /mnt`);
+	
+	// Mount root partition
+	await execPromise(`mount ${partitions.root} /mnt`);
+	
+	// Create subvolumes
+	await execPromise(`btrfs subvolume create /mnt/@`);
+	await execPromise(`btrfs subvolume create /mnt/@home`);
+	await execPromise(`btrfs subvolume create /mnt/@var`);
+	
+	// Unmount and remount with subvolumes
+	await execPromise(`umount /mnt`);
+	await execPromise(`mount -o subvol=@ ${partitions.root} /mnt`);
+	await execPromise(`mkdir -p /mnt/home /mnt/var`);
+	await execPromise(`mount -o subvol=@home ${partitions.root} /mnt/home`);
+	await execPromise(`mount -o subvol=@var ${partitions.root} /mnt/var`);
+	
+	if (isUEFI && partitions.efi) {
+		await execPromise(`mkdir -p /mnt/boot`);
+		await execPromise(`mount ${partitions.efi} /mnt/boot`);
+	}
+}
+
+async function installBaseSystem() {
+	// Update package databases
+	await execPromise(`pacman -Sy`);
+	
+	// Install base system
+	await execPromise(`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs`);
+	
+	// Generate fstab
+	await execPromise(`genfstab -U /mnt >> /mnt/etc/fstab`);
+}
+
+async function configureSystem() {
+	// Set timezone
+	await execPromise(`arch-chroot /mnt ln -sf /usr/share/zoneinfo/UTC /etc/localtime`);
+	await execPromise(`arch-chroot /mnt hwclock --systohc`);
+	
+	// Configure locale
+	await execPromise(`arch-chroot /mnt sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen`);
+	await execPromise(`arch-chroot /mnt locale-gen`);
+	await execPromise(`echo 'LANG=en_US.UTF-8' > /mnt/etc/locale.conf`);
+	
+	// Set hostname
+	await execPromise(`echo 'blossomos' > /mnt/etc/hostname`);
+	
+	// Configure hosts file
+	const hostsContent = `127.0.0.1\\tlocalhost\\n::1\\t\\tlocalhost\\n127.0.1.1\\tblossomos.localdomain\\tblossomos`;
+	await execPromise(`echo -e '${hostsContent}' > /mnt/etc/hosts`);
+	
+	// Set root password (empty for recovery)
+	await execPromise(`arch-chroot /mnt passwd -d root`);
+	
+	// Enable essential services
+	await execPromise(`arch-chroot /mnt systemctl enable NetworkManager`);
+}
+
+async function installEFIBootloader(rootPartition) {
+	// Install systemd-boot
+	await execPromise(`arch-chroot /mnt bootctl install`);
+	
+	// Create bootloader entry
+	const rootUUID = await getRootUUID(rootPartition);
+	const bootEntry = `title blossomOS\\nlinux /vmlinuz-linux\\ninitrd /initramfs-linux.img\\noptions root=UUID=${rootUUID} rootflags=subvol=@ rw quiet`;
+	
+	await execPromise(`echo -e '${bootEntry}' > /mnt/boot/loader/entries/blossomos.conf`);
+	
+	// Configure loader
+	const loaderConfig = `default blossomos\\ntimeout 3\\neditor 0`;
+	await execPromise(`echo -e '${loaderConfig}' > /mnt/boot/loader/loader.conf`);
+}
+
+async function installGRUB(diskPath) {
+	// Install GRUB packages
+	await execPromise(`arch-chroot /mnt pacman -S --noconfirm grub`);
+	
+	// Install GRUB to disk
+	await execPromise(`arch-chroot /mnt grub-install --target=i386-pc ${diskPath}`);
+	
+	// Generate GRUB config
+	await execPromise(`arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg`);
+}
+
+async function copyBlossomFiles() {
+	// Copy blossomOS branding files
+	await execPromise(`cp /etc/issue /mnt/etc/issue`);
+	await execPromise(`cp /etc/os-release /mnt/etc/os-release`);
+	await execPromise(`cp /etc/motd /mnt/etc/motd`);
+}
+
+async function createPacmanHook() {
+	// Create hooks directory
+	await execPromise(`mkdir -p /mnt/etc/pacman.d/hooks`);
+	
+	// Create hook to preserve blossomOS files
+	const hookContent = `[Trigger]\\nOperation = Install\\nOperation = Upgrade\\nType = Package\\nTarget = filesystem\\n\\n[Action]\\nDescription = Preserving blossomOS branding files...\\nWhen = PostTransaction\\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
+	
+	await execPromise(`echo -e '${hookContent}' > /mnt/etc/pacman.d/hooks/blossom-branding.hook`);
+	
+	// Backup original files
+	await execPromise(`cp /mnt/etc/issue /mnt/etc/issue.blossom`);
+	await execPromise(`cp /mnt/etc/os-release /mnt/etc/os-release.blossom`);
+	await execPromise(`cp /etc/motd /mnt/etc/motd.blossom`);
+}
+
+async function cleanupMounts() {
+	// Unmount all partitions
+	await execPromise(`umount -R /mnt`).catch(() => {});
+}
+
+async function getLastPartitionNumber(diskPath) {
+	const result = await execPromise(`parted ${diskPath} print`);
+	const lines = result.stdout.split('\n');
+	let maxPartNum = 0;
+	
+	for (const line of lines) {
+		const match = line.trim().match(/^(\d+)\s+/);
+		if (match) {
+			maxPartNum = Math.max(maxPartNum, parseInt(match[1]));
+		}
+	}
+	
+	return maxPartNum + 1;
+}
+
+async function getRootUUID(partition) {
+	try {
+		const result = await execPromise(`blkid -s UUID -o value ${partition}`);
+		return result.stdout.trim();
+	} catch (error) {
+		return '';
+	}
+}

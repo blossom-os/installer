@@ -37,4 +37,20 @@ contextBridge.exposeInMainWorld('electron', {
 	navigate: (path) => {
 		window.location.hash = path;
 	},
+	// Installer functions
+	scanDisks: () => {
+		return ipcRenderer.invoke('scan-disks');
+	},
+	checkBootMode: () => {
+		return ipcRenderer.invoke('check-boot-mode');
+	},
+	installSystem: (diskPath) => {
+		return ipcRenderer.invoke('install-system', diskPath);
+	},
+	onInstallationProgress: (callback) => {
+		ipcRenderer.on('installation-progress', (event, data) => callback(data));
+	},
+	removeInstallationProgressListener: () => {
+		ipcRenderer.removeAllListeners('installation-progress');
+	}
 });

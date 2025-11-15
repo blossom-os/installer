@@ -11,7 +11,12 @@
 		size: string;
 		model: string;
 		type: 'HDD' | 'SSD' | 'NVMe';
-		partitions: string[];
+		partitions: Array<{
+			name: string;
+			size: string;
+			fstype: string | null;
+			mountpoint: string | null;
+		}>;
 	}
 
 	let disks: Disk[] = [];
@@ -21,33 +26,13 @@
 
 	async function scanDisks() {
 		loading = true;
-		// Simulate disk scanning
-		setTimeout(() => {
-			disks = [
-				{
-					name: '/dev/sda',
-					size: '500 GB',
-					model: 'Samsung SSD 980',
-					type: 'SSD',
-					partitions: ['/dev/sda1 (EFI)', '/dev/sda2 (Windows)'],
-				},
-				{
-					name: '/dev/sdb',
-					size: '1 TB',
-					model: 'WD Blue HDD',
-					type: 'HDD',
-					partitions: ['/dev/sdb1 (Data)'],
-				},
-				{
-					name: '/dev/nvme0n1',
-					size: '256 GB',
-					model: 'Intel NVMe SSD',
-					type: 'NVMe',
-					partitions: [],
-				},
-			];
-			loading = false;
-		}, 1500);
+		try {
+			disks = await window.electron.scanDisks();
+		} catch (error) {
+			console.error('Failed to scan disks:', error);
+			disks = [];
+		}
+		loading = false;
 	}
 
 	function handleBack() {
@@ -56,6 +41,8 @@
 
 	function handleNext() {
 		if (selectedDisk) {
+			// Store the selected disk for the installation page
+			sessionStorage.setItem('selectedDisk', selectedDisk.name);
 			goto('/installer/install');
 		}
 	}
@@ -176,9 +163,14 @@
 										</Item.Title>
 										<Item.Description class="text-left">
 											Size: {disk.size}
-											{#if disk.partitions.length > 0}
+											{#if disk.partitions && disk.partitions.length > 0}
 												<br />
-												Partitions: {disk.partitions.join(', ')}
+												Partitions: {disk.partitions
+													.map(
+														(p) =>
+															`${p.name} (${p.fstype || 'unformatted'})`,
+													)
+													.join(', ')}
 											{:else}
 												<br />
 												No partitions (empty disk)

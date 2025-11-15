@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 
 	interface InstallStep {
@@ -14,6 +14,8 @@
 		current: boolean;
 		progress: number;
 	}
+
+	let selectedDisk = sessionStorage.getItem('selectedDisk') || '/dev/sda';
 
 	let installSteps: InstallStep[] = [
 		{
@@ -87,49 +89,93 @@
 
 	async function startInstallation() {
 		isInstalling = true;
-		installationLog = ['Starting blossomOS installation...'];
+		installationLog = [`Starting blossomOS installation on ${selectedDisk}...`];
 
-		for (let i = 0; i < installSteps.length; i++) {
-			const step = installSteps[i];
-			currentStepIndex = i;
-			step.current = true;
+		try {
+			// Set up progress listener
+			window.electron.onInstallationProgress((data: any) => {
+				handleInstallationProgress(data);
+			});
 
-			// Update slide presentation
-			updateSlide();
+			// Start the real installation
+			const result = await window.electron.installSystem(selectedDisk);
 
-			// Add to log
-			installationLog.push(`${new Date().toLocaleTimeString()}: ${step.title}`);
-			installationLog = [...installationLog];
-
-			// Simulate installation progress for each step
-			for (let progress = 0; progress <= 100; progress += 10) {
-				await new Promise((resolve) => setTimeout(resolve, 100));
-				step.progress = progress;
-				installSteps = [...installSteps];
-
-				// Update overall progress
-				overallProgress = (i * 100 + progress) / installSteps.length;
+			if (result.success) {
+				isComplete = true;
+				isInstalling = false;
+				updateSlide(); // Show final slide
+				installationLog.push(
+					`${new Date().toLocaleTimeString()}: Installation completed successfully!`,
+				);
+				installationLog = [...installationLog];
 			}
-
-			// Mark step as completed
-			step.completed = true;
-			step.current = false;
-			installSteps = [...installSteps];
-
-			// Add completion to log
-			installationLog.push(`${new Date().toLocaleTimeString()}: ${step.title} completed`);
+		} catch (error: any) {
+			console.error('Installation failed:', error);
+			isInstalling = false;
+			installationLog.push(
+				`${new Date().toLocaleTimeString()}: Installation failed: ${error.error || error.message || 'Unknown error'}`,
+			);
 			installationLog = [...installationLog];
 		}
+	}
 
-		// Installation complete
-		overallProgress = 100;
-		isComplete = true;
-		isInstalling = false;
-		updateSlide(); // Update to final slide
-		installationLog.push(
-			`${new Date().toLocaleTimeString()}: Installation completed successfully!`,
-		);
-		installationLog = [...installationLog];
+	function handleInstallationProgress(data: any) {
+		const { step, progress } = data;
+
+		// Update overall progress
+		overallProgress = progress;
+
+		// Find and update the current step
+		const stepMappings: Record<string, string> = {
+			analyze: 'prepare',
+			'partition-alongside': 'partition',
+			'partition-wipe': 'partition',
+			format: 'format',
+			mount: 'format',
+			'install-base': 'install',
+			configure: 'config',
+			bootloader: 'bootloader',
+			finalize: 'config',
+			cleanup: 'config',
+		};
+
+		const mappedStep = stepMappings[step] || step;
+		const stepIndex = installSteps.findIndex((s) => s.id === mappedStep);
+
+		if (stepIndex !== -1) {
+			// Complete previous steps
+			for (let i = 0; i < stepIndex; i++) {
+				installSteps[i].completed = true;
+				installSteps[i].current = false;
+			}
+
+			// Update current step
+			installSteps[stepIndex].current = true;
+			installSteps[stepIndex].progress = Math.min(progress, 100);
+			currentStepIndex = stepIndex;
+
+			updateSlide();
+
+			const stepTitles: Record<string, string> = {
+				analyze: 'Analyzing disk layout',
+				'partition-alongside': 'Creating partition alongside existing data',
+				'partition-wipe': 'Partitioning disk',
+				format: 'Formatting partitions',
+				mount: 'Mounting filesystems',
+				'install-base': 'Installing base system',
+				configure: 'Configuring system',
+				bootloader: 'Installing bootloader',
+				finalize: 'Finalizing installation',
+				cleanup: 'Cleaning up',
+			};
+
+			const message = stepTitles[step] || `Processing ${step}`;
+			installationLog.push(`${new Date().toLocaleTimeString()}: ${message}`);
+			installationLog = [...installationLog];
+
+			// Trigger reactivity
+			installSteps = [...installSteps];
+		}
 	}
 
 	function handleBack() {
@@ -177,6 +223,13 @@
 		setTimeout(() => {
 			startInstallation();
 		}, 1000);
+	});
+
+	onDestroy(() => {
+		// Clean up progress listener
+		if (window.electron) {
+			window.electron.removeInstallationProgressListener();
+		}
 	});
 </script>
 
