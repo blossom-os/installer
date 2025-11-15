@@ -354,7 +354,7 @@ ipcMain.handle('scan-disks', async (event) => {
 						
 						if (device.tran === 'nvme') {
 							diskType = 'NVMe';
-						} else if (device.rota === '0') {
+						} else if (device.rota === false) {
 							// ROTA=0 means no rotation, indicating SSD
 							diskType = 'SSD';
 						} else if (device.model?.toLowerCase().includes('ssd')) {
