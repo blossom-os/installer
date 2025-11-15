@@ -2,6 +2,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Item from '$lib/components/ui/item';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
@@ -11,12 +12,12 @@
 		model: string;
 		type: 'HDD' | 'SSD' | 'NVMe';
 		partitions: string[];
-		selected: boolean;
 	}
 
 	let disks: Disk[] = [];
 	let loading = false;
-	let selectedDisk: Disk | null = null;
+	let selectedDiskName: string = '';
+	$: selectedDisk = disks.find((disk) => disk.name === selectedDiskName) || null;
 
 	async function scanDisks() {
 		loading = true;
@@ -29,7 +30,6 @@
 					model: 'Samsung SSD 980',
 					type: 'SSD',
 					partitions: ['/dev/sda1 (EFI)', '/dev/sda2 (Windows)'],
-					selected: false,
 				},
 				{
 					name: '/dev/sdb',
@@ -37,7 +37,6 @@
 					model: 'WD Blue HDD',
 					type: 'HDD',
 					partitions: ['/dev/sdb1 (Data)'],
-					selected: false,
 				},
 				{
 					name: '/dev/nvme0n1',
@@ -45,19 +44,10 @@
 					model: 'Intel NVMe SSD',
 					type: 'NVMe',
 					partitions: [],
-					selected: false,
 				},
 			];
 			loading = false;
 		}, 1500);
-	}
-
-	function selectDisk(disk: Disk) {
-		// Deselect all disks
-		disks.forEach((d) => (d.selected = false));
-		// Select this disk
-		disk.selected = true;
-		selectedDisk = disk;
 	}
 
 	function handleBack() {
@@ -164,11 +154,11 @@
 						No disks found. Please check your hardware connections.
 					</div>
 				{:else}
-					<div class="space-y-2">
+					<RadioGroup.Root bind:value={selectedDiskName} class="space-y-2">
 						{#each disks as disk}
-							<button on:click={() => selectDisk(disk)} class="block w-full">
+							<label for={disk.name} class="cursor-pointer">
 								<Item.Root
-									class="cursor-pointer {disk.selected
+									class="cursor-pointer {selectedDiskName === disk.name
 										? 'ring-2 ring-primary bg-primary/5'
 										: 'hover:bg-muted/50'}"
 								>
@@ -196,35 +186,12 @@
 										</Item.Description>
 									</Item.Content>
 									<Item.Actions>
-										{#if disk.selected}
-											<div
-												class="w-4 h-4 bg-primary rounded-full flex items-center justify-center"
-											>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke-width="3"
-													stroke="currentColor"
-													class="size-2 text-primary-foreground"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														d="m4.5 12.75 6 6 9-13.5"
-													/>
-												</svg>
-											</div>
-										{:else}
-											<div
-												class="w-4 h-4 border-2 border-muted-foreground/30 rounded-full"
-											></div>
-										{/if}
+										<RadioGroup.Item value={disk.name} id={disk.name} />
 									</Item.Actions>
 								</Item.Root>
-							</button>
+							</label>
 						{/each}
-					</div>
+					</RadioGroup.Root>
 				{/if}
 			</div>
 
