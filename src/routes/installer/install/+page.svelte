@@ -112,16 +112,38 @@
 			}
 		} catch (installError: any) {
 			console.error('Installation failed:', installError);
+			console.error('Error type:', typeof installError);
+			console.error('Error keys:', Object.keys(installError));
+			console.error('Full error object:', JSON.stringify(installError, null, 2));
 			isInstalling = false;
 
-			// Extract detailed error information
-			let errorMessage = 'Unknown error';
-			if (installError.error) {
-				errorMessage = installError.error;
-			} else if (installError.message) {
-				errorMessage = installError.message;
-			} else if (typeof installError === 'string') {
+			// Extract detailed error information with better debugging
+			let errorMessage = 'Unknown error occurred';
+			let errorDetails = null;
+
+			// Try different ways to extract the error message
+			if (typeof installError === 'string') {
 				errorMessage = installError;
+			} else if (installError && typeof installError === 'object') {
+				// Check various common error properties
+				if (installError.error) {
+					if (typeof installError.error === 'string') {
+						errorMessage = installError.error;
+					} else if (typeof installError.error === 'object') {
+						errorMessage = JSON.stringify(installError.error);
+						errorDetails = installError.error;
+					}
+				} else if (installError.message) {
+					errorMessage = installError.message;
+				} else if (installError.stderr) {
+					errorMessage = installError.stderr;
+				} else if (installError.stdout) {
+					errorMessage = `Command output: ${installError.stdout}`;
+				} else {
+					// If none of the above, stringify the whole object
+					errorMessage = `Installation error: ${JSON.stringify(installError)}`;
+					errorDetails = installError;
+				}
 			}
 
 			// Add detailed error to log
@@ -129,12 +151,23 @@
 				`${new Date().toLocaleTimeString()}: Installation failed: ${errorMessage}`,
 			);
 
+			// Add more debugging information to the log
+			installationLog.push(
+				`${new Date().toLocaleTimeString()}: Error type: ${typeof installError}`,
+			);
+
 			// If there are additional details, add them too
-			if (installError.details) {
+			if (errorDetails || installError.details) {
+				const details = errorDetails || installError.details;
 				installationLog.push(
-					`${new Date().toLocaleTimeString()}: Error details: ${JSON.stringify(installError.details, null, 2)}`,
+					`${new Date().toLocaleTimeString()}: Error details: ${JSON.stringify(details, null, 2)}`,
 				);
 			}
+
+			// Add the full error object for debugging
+			installationLog.push(
+				`${new Date().toLocaleTimeString()}: Full error object: ${JSON.stringify(installError, null, 2)}`,
+			);
 
 			installationLog = [...installationLog];
 
