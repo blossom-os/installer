@@ -415,8 +415,46 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			resolve({ success: true, message: 'Installation completed successfully!' });
 		} catch (error) {
 			console.error('Installation error:', error);
-			const errorMessage = error.message || error.error?.message || error.stderr || 'Unknown error';
-			reject({ error: errorMessage, details: error });
+			
+			// Properly serialize error information for IPC
+			let errorMessage = 'Unknown error occurred';
+			let errorDetails = {};
+			
+			if (error) {
+				// Extract error message from various possible sources
+				errorMessage = error.message || 
+							  error.error?.message || 
+							  error.stderr || 
+							  error.stdout || 
+							  String(error);
+				
+				// Create serializable error details
+				errorDetails = {
+					type: error.constructor?.name || 'Error',
+					message: errorMessage,
+					stack: error.stack,
+					stderr: error.stderr,
+					stdout: error.stdout,
+					command: error.command,
+					code: error.code,
+					signal: error.signal
+				};
+				
+				// Log detailed error information
+				console.error('Error type:', errorDetails.type);
+				console.error('Error message:', errorDetails.message);
+				console.error('Error stderr:', errorDetails.stderr);
+				console.error('Error stdout:', errorDetails.stdout);
+				console.error('Error command:', errorDetails.command);
+				console.error('Error stack:', errorDetails.stack);
+			}
+			
+			// Send detailed error information that can be properly serialized
+			reject({ 
+				error: errorMessage,
+				details: errorDetails,
+				timestamp: new Date().toISOString()
+			});
 		}
 	});
 });
@@ -428,11 +466,27 @@ function execPromise(command) {
 		exec(command, (error, stdout, stderr) => {
 			if (error) {
 				console.error(`Command failed: ${command}`);
-				console.error(`Error: ${error.message}`);
+				console.error(`Error code: ${error.code}`);
+				console.error(`Error signal: ${error.signal}`);
+				console.error(`Error message: ${error.message}`);
+				console.error(`Stdout: ${stdout}`);
 				console.error(`Stderr: ${stderr}`);
-				reject({ error, stdout, stderr, command });
+				
+				// Create a serializable error object
+				const execError = {
+					message: error.message,
+					code: error.code,
+					signal: error.signal,
+					stdout: stdout,
+					stderr: stderr,
+					command: command
+				};
+				
+				reject(execError);
 			} else {
 				console.log(`Command success: ${command}`);
+				if (stdout) console.log(`Stdout: ${stdout}`);
+				if (stderr) console.log(`Stderr: ${stderr}`);
 				resolve({ stdout, stderr });
 			}
 		});
