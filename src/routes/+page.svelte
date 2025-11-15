@@ -46,6 +46,10 @@
 	function handleWifi() {
 		goto('/wifi');
 	}
+
+	function handleInstaller() {
+		goto('/installer/welcome');
+	}
 </script>
 
 <main>
@@ -57,16 +61,16 @@
 		</Card.Description>
 	</Card.Header>
 	<Card.Content class="mt-2">
-		<Item.Root class="cursor-pointer">
-			<Item.Media />
-			<Item.Content>
-				<Item.Title>Install blossomOS</Item.Title>
-				<Item.Description>
-					Launch the blossomOS installer to install the operating system.
-				</Item.Description>
-			</Item.Content>
-			<Item.Actions>
-				<button>
+		<button on:click={handleInstaller} class="block w-full">
+			<Item.Root class="cursor-pointer">
+				<Item.Media />
+				<Item.Content>
+					<Item.Title>Install blossomOS</Item.Title>
+					<Item.Description class="text-left">
+						Launch the blossomOS installer to install the operating system.
+					</Item.Description>
+				</Item.Content>
+				<Item.Actions>
 					<img
 						src="/installer.svg"
 						alt="Install blossomOS"
@@ -74,9 +78,9 @@
 						height="48"
 						class="cursor-pointer"
 					/>
-				</button>
-			</Item.Actions>
-		</Item.Root>
+				</Item.Actions>
+			</Item.Root>
+		</button>
 		<button on:click={handleGparted} class="block w-full">
 			<Item.Root class="cursor-pointer">
 				<Item.Media />
