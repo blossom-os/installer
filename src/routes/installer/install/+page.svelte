@@ -76,6 +76,7 @@
 	let showLog = false;
 	let shouldRestart = false;
 	let currentSlide = 1;
+	let error: string | null = null;
 	const totalSlides = 6; // Number of presentation images
 
 	function updateSlide() {
@@ -109,13 +110,36 @@
 				);
 				installationLog = [...installationLog];
 			}
-		} catch (error: any) {
-			console.error('Installation failed:', error);
+		} catch (installError: any) {
+			console.error('Installation failed:', installError);
 			isInstalling = false;
+
+			// Extract detailed error information
+			let errorMessage = 'Unknown error';
+			if (installError.error) {
+				errorMessage = installError.error;
+			} else if (installError.message) {
+				errorMessage = installError.message;
+			} else if (typeof installError === 'string') {
+				errorMessage = installError;
+			}
+
+			// Add detailed error to log
 			installationLog.push(
-				`${new Date().toLocaleTimeString()}: Installation failed: ${error.error || error.message || 'Unknown error'}`,
+				`${new Date().toLocaleTimeString()}: Installation failed: ${errorMessage}`,
 			);
+
+			// If there are additional details, add them too
+			if (installError.details) {
+				installationLog.push(
+					`${new Date().toLocaleTimeString()}: Error details: ${JSON.stringify(installError.details, null, 2)}`,
+				);
+			}
+
 			installationLog = [...installationLog];
+
+			// Set error state for UI
+			error = errorMessage;
 		}
 	}
 
@@ -180,6 +204,8 @@
 
 	function handleBack() {
 		if (!isInstalling) {
+			// Reset error state when going back
+			error = null;
 			goto('/installer/select-disk');
 		}
 	}
@@ -256,7 +282,12 @@
 				</Button>
 			{/if}
 			<div>
-				{#if isComplete}
+				{#if error}
+					<Card.Title>Installation Failed</Card.Title>
+					<Card.Description class="mt-2 text-destructive">
+						An error occurred during the installation process.
+					</Card.Description>
+				{:else if isComplete}
 					<Card.Title>Installation Complete!</Card.Title>
 					<Card.Description class="mt-2 text-muted-foreground">
 						blossomOS has been successfully installed on your computer.
@@ -274,7 +305,141 @@
 
 	<Card.Content class="mt-6">
 		<div class="space-y-6">
-			{#if isComplete}
+			{#if error}
+				<!-- Error Message -->
+				<div class="text-center space-y-4">
+					<div
+						class="mx-auto w-24 h-24 bg-destructive/20 rounded-full flex items-center justify-center"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke-width="1.5"
+							stroke="currentColor"
+							class="size-12 text-destructive"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+							/>
+						</svg>
+					</div>
+					<h2 class="text-2xl font-bold text-destructive">Installation Failed</h2>
+					<p class="text-muted-foreground max-w-md mx-auto">
+						An error occurred during the installation process. Please check the error
+						details below and try again.
+					</p>
+				</div>
+
+				<!-- Error Details -->
+				<div class="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+					<div class="flex items-start gap-3">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke-width="1.5"
+							stroke="currentColor"
+							class="size-5 text-destructive mt-0.5 shrink-0"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+							/>
+						</svg>
+						<div>
+							<h4 class="font-medium text-destructive">Error Details</h4>
+							<p class="text-sm text-muted-foreground mt-1 font-mono break-all">
+								{error}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Troubleshooting Tips -->
+				<div class="p-4 bg-muted/20 border border-muted/30 rounded-lg">
+					<h4 class="font-medium mb-2">Troubleshooting Tips</h4>
+					<ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+						<li>Ensure you have sufficient disk space (at least 8GB free)</li>
+						<li>Check that the selected disk is not currently mounted or in use</li>
+						<li>Verify that you have administrator privileges</li>
+						<li>Make sure all required packages (parted, btrfs-progs) are installed</li>
+						<li>Try selecting a different disk or partition</li>
+					</ul>
+				</div>
+
+				<!-- Error Action Buttons -->
+				<div class="space-y-4">
+					<div class="flex gap-3 justify-center">
+						<Button variant="outline" onclick={handleBack}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke-width="1.5"
+								stroke="currentColor"
+								class="size-4 mr-2"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									d="M15.75 19.5 8.25 12l7.5-7.5"
+								/>
+							</svg>
+							Back to Disk Selection
+						</Button>
+						<Button
+							onclick={() => {
+								error = null;
+								isInstalling = false;
+								isComplete = false;
+								currentStepIndex = 0;
+								overallProgress = 0;
+								installationLog = [];
+								currentSlide = 1;
+								startInstallation();
+							}}
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke-width="1.5"
+								stroke="currentColor"
+								class="size-4 mr-2"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+								/>
+							</svg>
+							Try Again
+						</Button>
+						<Button variant="outline" onclick={handleReturnToRecovery}>
+							Return to Recovery
+						</Button>
+					</div>
+				</div>
+
+				<!-- Installation Log (Always visible on error) -->
+				<div class="pt-4 border-t">
+					<h4 class="font-medium mb-2">Installation Log</h4>
+					<div
+						class="p-3 bg-muted/50 rounded-lg max-h-48 overflow-y-auto font-mono text-xs"
+					>
+						{#each installationLog as logEntry}
+							<div class="text-muted-foreground mb-1">{logEntry}</div>
+						{/each}
+						{#if installationLog.length === 0}
+							<div class="text-muted-foreground">No log entries available.</div>
+						{/if}
+					</div>
+				</div>
+			{:else if isComplete}
 				<!-- Success Message -->
 				<div class="text-center space-y-4">
 					<div

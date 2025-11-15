@@ -340,45 +340,60 @@ ipcMain.handle('check-boot-mode', async (event) => {
 ipcMain.handle('install-system', async (event, diskPath) => {
 	return new Promise(async (resolve, reject) => {
 		try {
+			console.log(`Starting installation on ${diskPath}`);
+			
 			const isUEFI = await new Promise((res) => {
-				exec('ls /sys/firmware/efi', (error) => res(!error));
+				exec('ls /sys/firmware/efi', (error) => {
+					console.log('Boot mode check:', error ? 'BIOS' : 'UEFI');
+					res(!error);
+				});
 			});
 			
 			// Step 1: Analyze disk and create partitions
 			event.sender.send('installation-progress', { step: 'analyze', progress: 10 });
+			console.log('Analyzing disk...');
 			
 			const hasNTFS = await checkForNTFS(diskPath);
 			const hasFreeSpace = await checkFreeSpace(diskPath);
+			console.log(`NTFS detected: ${hasNTFS}, Free space: ${hasFreeSpace}`);
 			
 			let installPartition;
 			if (hasNTFS && hasFreeSpace) {
 				// Install alongside Windows
 				event.sender.send('installation-progress', { step: 'partition-alongside', progress: 20 });
+				console.log('Creating partition alongside existing data...');
 				installPartition = await createAlongsidePartition(diskPath, isUEFI);
 			} else {
 				// Wipe entire disk
 				event.sender.send('installation-progress', { step: 'partition-wipe', progress: 20 });
+				console.log('Wiping and partitioning disk...');
 				installPartition = await wipeAndPartition(diskPath, isUEFI);
 			}
+			console.log('Partitions created:', installPartition);
 			
 			// Step 2: Format partitions
 			event.sender.send('installation-progress', { step: 'format', progress: 30 });
+			console.log('Formatting partitions...');
 			await formatPartitions(installPartition, isUEFI);
 			
 			// Step 3: Mount partitions
 			event.sender.send('installation-progress', { step: 'mount', progress: 40 });
+			console.log('Mounting partitions...');
 			await mountPartitions(installPartition, isUEFI);
 			
 			// Step 4: Install base system
 			event.sender.send('installation-progress', { step: 'install-base', progress: 50 });
+			console.log('Installing base system...');
 			await installBaseSystem();
 			
 			// Step 5: Configure system
 			event.sender.send('installation-progress', { step: 'configure', progress: 70 });
+			console.log('Configuring system...');
 			await configureSystem();
 			
 			// Step 6: Install bootloader
 			event.sender.send('installation-progress', { step: 'bootloader', progress: 85 });
+			console.log('Installing bootloader...');
 			if (isUEFI) {
 				await installEFIBootloader(installPartition.root);
 			} else {
@@ -387,17 +402,21 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			
 			// Step 7: Copy blossomOS files
 			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
+			console.log('Copying blossomOS files...');
 			await copyBlossomFiles();
 			await createPacmanHook();
 			
 			// Step 8: Cleanup
 			event.sender.send('installation-progress', { step: 'cleanup', progress: 100 });
+			console.log('Cleaning up...');
 			await cleanupMounts();
 			
+			console.log('Installation completed successfully!');
 			resolve({ success: true, message: 'Installation completed successfully!' });
 		} catch (error) {
 			console.error('Installation error:', error);
-			reject({ error: error.message });
+			const errorMessage = error.message || error.error?.message || error.stderr || 'Unknown error';
+			reject({ error: errorMessage, details: error });
 		}
 	});
 });
@@ -405,14 +424,23 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 // Helper functions for installation
 function execPromise(command) {
 	return new Promise((resolve, reject) => {
+		console.log(`Executing: ${command}`);
 		exec(command, (error, stdout, stderr) => {
 			if (error) {
-				reject({ error, stdout, stderr });
+				console.error(`Command failed: ${command}`);
+				console.error(`Error: ${error.message}`);
+				console.error(`Stderr: ${stderr}`);
+				reject({ error, stdout, stderr, command });
 			} else {
+				console.log(`Command success: ${command}`);
 				resolve({ stdout, stderr });
 			}
 		});
 	});
+}
+
+function execPromiseWithSudo(command) {
+	return execPromise(`sudo ${command}`);
 }
 
 async function checkForNTFS(diskPath) {
@@ -426,104 +454,121 @@ async function checkForNTFS(diskPath) {
 
 async function checkFreeSpace(diskPath) {
 	try {
-		const result = await execPromise(`parted ${diskPath} print free`);
+		const result = await execPromiseWithSudo(`parted ${diskPath} print free`);
 		return result.stdout.includes('Free Space');
 	} catch (error) {
+		console.log(`Could not check free space on ${diskPath}:`, error.stderr);
 		return false;
 	}
 }
 
 async function createAlongsidePartition(diskPath, isUEFI) {
-	// Find the end of the last partition and create new ones
-	const partInfo = await execPromise(`parted ${diskPath} print`);
-	
-	// Get the end of the last partition
-	const lines = partInfo.stdout.split('\n');
-	let lastEnd = '50%'; // Fallback to 50% of disk
-	
-	for (const line of lines) {
-		if (line.trim().match(/^\d+\s+/)) {
-			const parts = line.trim().split(/\s+/);
-			if (parts.length >= 3) {
-				lastEnd = parts[2];
+	try {
+		// Find the end of the last partition and create new ones
+		const partInfo = await execPromiseWithSudo(`parted ${diskPath} print`);
+		
+		// Get the end of the last partition
+		const lines = partInfo.stdout.split('\n');
+		let lastEnd = '50%'; // Fallback to 50% of disk
+		
+		for (const line of lines) {
+			if (line.trim().match(/^\d+\s+/)) {
+				const parts = line.trim().split(/\s+/);
+				if (parts.length >= 3) {
+					lastEnd = parts[2];
+				}
 			}
 		}
+		
+		// Create root partition (BTRFS) - use remaining space
+		await execPromiseWithSudo(`parted ${diskPath} mkpart primary btrfs ${lastEnd} 100%`);
+		
+		// Get partition number
+		const partNum = await getLastPartitionNumber(diskPath);
+		return {
+			root: `${diskPath}${partNum}`,
+			efi: null // Use existing EFI partition
+		};
+	} catch (error) {
+		throw new Error(`Failed to create alongside partition: ${error.stderr || error.message}`);
 	}
-	
-	// Create root partition (BTRFS)
-	await execPromise(`parted ${diskPath} mkpart primary btrfs ${lastEnd} 100%`);
-	
-	// Get partition number
-	const partNum = await getLastPartitionNumber(diskPath);
-	return {
-		root: `${diskPath}${partNum}`,
-		efi: null // Use existing EFI partition
-	};
 }
 
 async function wipeAndPartition(diskPath, isUEFI) {
-	// Wipe the disk
-	await execPromise(`wipefs -a ${diskPath}`);
-	
-	if (isUEFI) {
-		// Create GPT partition table
-		await execPromise(`parted ${diskPath} mklabel gpt`);
+	try {
+		// Wipe the disk
+		await execPromiseWithSudo(`wipefs -a ${diskPath}`);
 		
-		// Create EFI partition (512MB)
-		await execPromise(`parted ${diskPath} mkpart primary fat32 1MiB 513MiB`);
-		await execPromise(`parted ${diskPath} set 1 esp on`);
-		
-		// Create root partition (rest of disk)
-		await execPromise(`parted ${diskPath} mkpart primary btrfs 513MiB 100%`);
-		
-		return {
-			efi: `${diskPath}1`,
-			root: `${diskPath}2`
-		};
-	} else {
-		// Create MBR partition table
-		await execPromise(`parted ${diskPath} mklabel msdos`);
-		
-		// Create root partition (entire disk)
-		await execPromise(`parted ${diskPath} mkpart primary btrfs 1MiB 100%`);
-		await execPromise(`parted ${diskPath} set 1 boot on`);
-		
-		return {
-			root: `${diskPath}1`,
-			efi: null
-		};
+		if (isUEFI) {
+			// Create GPT partition table
+			await execPromiseWithSudo(`parted ${diskPath} mklabel gpt`);
+			
+			// Create EFI partition (512MB)
+			await execPromiseWithSudo(`parted ${diskPath} mkpart primary fat32 1MiB 513MiB`);
+			await execPromiseWithSudo(`parted ${diskPath} set 1 esp on`);
+			
+			// Create root partition (rest of disk)
+			await execPromiseWithSudo(`parted ${diskPath} mkpart primary btrfs 513MiB 100%`);
+			
+			return {
+				efi: `${diskPath}1`,
+				root: `${diskPath}2`
+			};
+		} else {
+			// Create MBR partition table
+			await execPromiseWithSudo(`parted ${diskPath} mklabel msdos`);
+			
+			// Create root partition (entire disk)
+			await execPromiseWithSudo(`parted ${diskPath} mkpart primary btrfs 1MiB 100%`);
+			await execPromiseWithSudo(`parted ${diskPath} set 1 boot on`);
+			
+			return {
+				root: `${diskPath}1`,
+				efi: null
+			};
+		}
+	} catch (error) {
+		throw new Error(`Failed to wipe and partition disk: ${error.stderr || error.message}`);
 	}
 }
 
 async function formatPartitions(partitions, isUEFI) {
-	if (isUEFI && partitions.efi) {
-		await execPromise(`mkfs.fat -F32 ${partitions.efi}`);
+	try {
+		if (isUEFI && partitions.efi) {
+			await execPromiseWithSudo(`mkfs.fat -F32 ${partitions.efi}`);
+		}
+		await execPromiseWithSudo(`mkfs.btrfs -f ${partitions.root}`);
+	} catch (error) {
+		throw new Error(`Failed to format partitions: ${error.stderr || error.message}`);
 	}
-	await execPromise(`mkfs.btrfs -f ${partitions.root}`);
 }
 
 async function mountPartitions(partitions, isUEFI) {
-	// Create mount directories
-	await execPromise(`mkdir -p /mnt`);
-	
-	// Mount root partition
-	await execPromise(`mount ${partitions.root} /mnt`);
-	
-	// Create subvolumes
-	await execPromise(`btrfs subvolume create /mnt/@`);
-	await execPromise(`btrfs subvolume create /mnt/@home`);
-	await execPromise(`btrfs subvolume create /mnt/@var`);
-	
-	// Unmount and remount with subvolumes
-	await execPromise(`umount /mnt`);
-	await execPromise(`mount -o subvol=@ ${partitions.root} /mnt`);
-	await execPromise(`mkdir -p /mnt/home /mnt/var`);
-	await execPromise(`mount -o subvol=@home ${partitions.root} /mnt/home`);
-	await execPromise(`mount -o subvol=@var ${partitions.root} /mnt/var`);
-	
-	if (isUEFI && partitions.efi) {
-		await execPromise(`mkdir -p /mnt/boot`);
-		await execPromise(`mount ${partitions.efi} /mnt/boot`);
+	try {
+		// Create mount directories
+		await execPromiseWithSudo(`mkdir -p /mnt`);
+		
+		// Mount root partition
+		await execPromiseWithSudo(`mount ${partitions.root} /mnt`);
+		
+		// Create subvolumes
+		await execPromiseWithSudo(`btrfs subvolume create /mnt/@`);
+		await execPromiseWithSudo(`btrfs subvolume create /mnt/@home`);
+		await execPromiseWithSudo(`btrfs subvolume create /mnt/@var`);
+		
+		// Unmount and remount with subvolumes
+		await execPromiseWithSudo(`umount /mnt`);
+		await execPromiseWithSudo(`mount -o subvol=@ ${partitions.root} /mnt`);
+		await execPromiseWithSudo(`mkdir -p /mnt/home /mnt/var`);
+		await execPromiseWithSudo(`mount -o subvol=@home ${partitions.root} /mnt/home`);
+		await execPromiseWithSudo(`mount -o subvol=@var ${partitions.root} /mnt/var`);
+		
+		if (isUEFI && partitions.efi) {
+			await execPromiseWithSudo(`mkdir -p /mnt/boot`);
+			await execPromiseWithSudo(`mount ${partitions.efi} /mnt/boot`);
+		}
+	} catch (error) {
+		throw new Error(`Failed to mount partitions: ${error.stderr || error.message}`);
 	}
 }
 
@@ -616,18 +661,22 @@ async function cleanupMounts() {
 }
 
 async function getLastPartitionNumber(diskPath) {
-	const result = await execPromise(`parted ${diskPath} print`);
-	const lines = result.stdout.split('\n');
-	let maxPartNum = 0;
-	
-	for (const line of lines) {
-		const match = line.trim().match(/^(\d+)\s+/);
-		if (match) {
-			maxPartNum = Math.max(maxPartNum, parseInt(match[1]));
+	try {
+		const result = await execPromiseWithSudo(`parted ${diskPath} print`);
+		const lines = result.stdout.split('\n');
+		let maxPartNum = 0;
+		
+		for (const line of lines) {
+			const match = line.trim().match(/^(\d+)\s+/);
+			if (match) {
+				maxPartNum = Math.max(maxPartNum, parseInt(match[1]));
+			}
 		}
+		
+		return maxPartNum;
+	} catch (error) {
+		throw new Error(`Failed to get partition number: ${error.stderr || error.message}`);
 	}
-	
-	return maxPartNum + 1;
 }
 
 async function getRootUUID(partition) {
