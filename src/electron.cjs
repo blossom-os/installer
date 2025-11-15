@@ -631,10 +631,10 @@ async function installBaseSystem() {
 	await execPromiseWithSudo(`pacman -Sy`);
 	
 	// Install base system
-	await execPromiseWithSudo(`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs`);
+	await execPromiseWithSudo(`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs networkmanager`);
 	
 	// Generate fstab
-	await execPromiseWithSudo(`genfstab -U /mnt >> /mnt/etc/fstab`);
+	await execPromise(`genfstab -U /mnt | sudo tee /mnt/etc/fstab`);
 }
 
 async function configureSystem() {
@@ -645,14 +645,14 @@ async function configureSystem() {
 	// Configure locale
 	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen`);
 	await execPromiseWithSudo(`arch-chroot /mnt locale-gen`);
-	await execPromiseWithSudo(`echo 'LANG=en_US.UTF-8' | tee /mnt/etc/locale.conf`);
+	await execPromise(`echo 'LANG=en_US.UTF-8' | sudo tee /mnt/etc/locale.conf`);
 	
 	// Set hostname
-	await execPromiseWithSudo(`echo 'blossomos' | tee /mnt/etc/hostname`);
+	await execPromise(`echo 'blossomos' | sudo tee /mnt/etc/hostname`);
 	
 	// Configure hosts file
 	const hostsContent = `127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\tblossomos.localdomain\tblossomos`;
-	await execPromiseWithSudo(`echo -e '${hostsContent}' | tee /mnt/etc/hosts`);
+	await execPromise(`echo -e '${hostsContent}' | sudo tee /mnt/etc/hosts`);
 	
 	// Set root password (empty for recovery)
 	await execPromiseWithSudo(`arch-chroot /mnt passwd -d root`);
@@ -662,18 +662,8 @@ async function configureSystem() {
 }
 
 async function installEFIBootloader(rootPartition) {
-	// Install systemd-boot
-	await execPromiseWithSudo(`arch-chroot /mnt bootctl install`);
-	
-	// Create bootloader entry
-	const rootUUID = await getRootUUID(rootPartition);
-	const bootEntry = `title blossomOS\nlinux /vmlinuz-linux\ninitrd /initramfs-linux.img\noptions root=UUID=${rootUUID} rootflags=subvol=@ rw quiet`;
-	
-	await execPromiseWithSudo(`echo -e '${bootEntry}' | tee /mnt/boot/loader/entries/blossomos.conf`);
-	
-	// Configure loader
-	const loaderConfig = `default blossomos\ntimeout 3\neditor 0`;
-	await execPromiseWithSudo(`echo -e '${loaderConfig}' | tee /mnt/boot/loader/loader.conf`);
+	// Install EFISTUB
+	await execPromiseWithSudo(`efibootmgr -c -d ${rootPartition} -p 1 -L "blossomOS" -l /vmlinuz-linux -u "root=UUID=$(blkid -s UUID -o value ${rootPartition}) rw initrd=/initramfs-linux.img"`);
 }
 
 async function installGRUB(diskPath) {
@@ -682,6 +672,9 @@ async function installGRUB(diskPath) {
 	
 	// Install GRUB to disk
 	await execPromiseWithSudo(`arch-chroot /mnt grub-install --target=i386-pc ${diskPath}`);
+
+	await execPromiseWithSudo(`arch-chroot /mnt pacman -S --noconfirm os-prober`);
+	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub`);
 	
 	// Generate GRUB config
 	await execPromiseWithSudo(`arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg`);
@@ -701,7 +694,7 @@ async function createPacmanHook() {
 	// Create hook to preserve blossomOS files
 	const hookContent = `[Trigger]\nOperation = Install\nOperation = Upgrade\nType = Package\nTarget = filesystem\n\n[Action]\nDescription = Preserving blossomOS branding files...\nWhen = PostTransaction\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
 	
-	await execPromiseWithSudo(`echo -e '${hookContent}' | tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`);
+	await execPromise(`echo -e '${hookContent}' | sudo tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`);
 	
 	// Backup original files
 	await execPromiseWithSudo(`cp /mnt/etc/issue /mnt/etc/issue.blossom`);
