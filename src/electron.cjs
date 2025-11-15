@@ -106,10 +106,26 @@ function createMainWindow() {
 		mainWindow = null;
 	});
 
-	if (dev) loadVite(port);
-	else {
+	// Check for command line arguments
+	const isPostInstall = process.argv.includes('--postinstall');
+	
+	if (dev) {
+		loadVite(port);
+		// Navigate to postinstall route if flag is present
+		if (isPostInstall) {
+			mainWindow.webContents.once('dom-ready', () => {
+				mainWindow.webContents.executeJavaScript(`
+					window.location.hash = '#/postinstall';
+				`);
+			});
+		}
+	} else {
 		// Load the built app from the build directory
-		mainWindow.loadFile(path.join(__dirname, '../index.html'));
+		if (isPostInstall) {
+			mainWindow.loadFile(path.join(__dirname, '../index.html'), { hash: 'postinstall' });
+		} else {
+			mainWindow.loadFile(path.join(__dirname, '../index.html'));
+		}
 	}
 }
 
@@ -118,6 +134,11 @@ app.on('activate', () => {
 	if (!mainWindow) {
 		createMainWindow();
 	}
+});
+
+// IPC handler to check if running in postinstall mode
+ipcMain.handle('check-postinstall-mode', async () => {
+	return process.argv.includes('--postinstall');
 });
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
@@ -693,11 +714,85 @@ async function installBaseSystem() {
 
 	// Install base system
 	await execPromiseWithSudo(
-		`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs networkmanager`,
+		`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs networkmanager `,
 	);
 
 	// Generate fstab
 	await execPromise(`genfstab -U /mnt | sudo tee /mnt/etc/fstab`);
+
+	// Install minimal KDE in chroot
+	await installMinimalKDEChroot();
+}
+
+export async function installMinimalKDEChroot() {
+  const CHROOT = "arch-chroot /mnt";
+  const USER = "liveuser";
+
+  log('Starting minimal KDE installation in chroot...');
+
+  await execPromiseWithSudo(`
+    ${CHROOT} bash -c "
+      pacman -Sy --noconfirm --needed plasma-desktop konsole dolphin sddm kwin-x11 \
+	  plasma-nm plasma-pa bluedevil powerdevil systemsettings kde-gtk-config \ 
+	  breeze breeze-gtk oxygen-icons breeze-icon-theme hicolor-icon-theme \ 
+	  xdg-user-dirs-gtk xdg-desktop-portal-kde flatpak
+    "
+  `);
+
+  log('Configuring SDDM autologin...');
+
+  await execPromiseWithSudo(`
+    ${CHROOT} bash -c "
+      mkdir -p /etc/sddm.conf.d
+    "
+  `);
+
+  await execPromiseWithSudo(`
+    ${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF
+[Autologin]
+User=${USER}
+Session=custom.desktop
+EOF"
+  `);
+
+  await execPromiseWithSudo(`
+    ${CHROOT} bash -c "cat >/usr/share/xsessions/custom.desktop <<EOF
+[Desktop Entry]
+Name=Custom
+Exec=/usr/local/bin/start-custom
+Type=Application
+EOF"
+  `);
+
+  await execPromiseWithSudo(`
+    ${CHROOT} bash -c "cat >/usr/local/bin/start-custom <<'EOF'
+#!/bin/bash
+
+# Start KWin
+kwin_x11 --replace &
+
+sleep 2
+
+# Run the Blossomos installer
+cd /opt/blossomos-installer/ || exit 1
+bun dev --postinstall
+EOF"
+  `);
+
+  await execPromiseWithSudo(`
+    ${CHROOT} chmod +x /usr/local/bin/start-custom
+  `);
+
+  await execPromiseWithSudo(`
+    ${CHROOT} systemctl enable sddm.service
+  `);
+
+  log("Copying installer files...");
+  await execPromiseWithSudo(`
+	cp -r /opt/blossomos-installer /mnt/opt/blossomos-installer
+  `);
+
+  log('Minimal KDE installation in chroot completed.');
 }
 
 async function configureSystem() {
@@ -715,15 +810,16 @@ async function configureSystem() {
 	// Set hostname
 	await execPromise(`echo 'blossomos' | sudo tee /mnt/etc/hostname`);
 
-	// Configure hosts file
-	const hostsContent = `127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\tblossomos.localdomain\tblossomos`;
-	await execPromise(`echo -e '${hostsContent}' | sudo tee /mnt/etc/hosts`);
-
 	// Set root password (empty for recovery)
 	await execPromiseWithSudo(`arch-chroot /mnt passwd -d root`);
 
 	// Enable essential services
 	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable NetworkManager`);
+
+	// Initialize pacman keyring
+	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --init`);
+	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --populate archlinux`);
+	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --refresh-keys`);
 }
 
 async function installEFIBootloader(rootPartition) {

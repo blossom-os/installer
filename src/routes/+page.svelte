@@ -1,7 +1,22 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
+
+	// Check for postinstall mode on component mount
+	onMount(async () => {
+		if (window.electron) {
+			try {
+				const isPostinstall = await window.electron.checkPostinstallMode();
+				if (isPostinstall) {
+					goto('/postinstall');
+				}
+			} catch (error) {
+				console.error('Failed to check postinstall mode:', error);
+			}
+		}
+	});
 
 	function handleGparted() {
 		if (window.electron) {

@@ -52,5 +52,8 @@ contextBridge.exposeInMainWorld('electron', {
 	},
 	removeInstallationProgressListener: () => {
 		ipcRenderer.removeAllListeners('installation-progress');
+	},
+	checkPostinstallMode: () => {
+		return ipcRenderer.invoke('check-postinstall-mode');
 	}
 });
