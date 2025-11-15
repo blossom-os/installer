@@ -77,20 +77,45 @@
 	let shouldRestart = false;
 	let currentSlide = 1;
 	let error: string | null = null;
+	let slideInterval: NodeJS.Timeout | null = null;
 	const totalSlides = 6; // Number of presentation images
 
+	function startSlideshow() {
+		currentSlide = 1;
+
+		// First slide shows for 30 seconds
+		setTimeout(() => {
+			currentSlide = 2;
+
+			// Subsequent slides change every 20 seconds
+			slideInterval = setInterval(() => {
+				currentSlide = (currentSlide % totalSlides) + 1;
+			}, 20000);
+		}, 30000);
+	}
+
+	function stopSlideshow() {
+		if (slideInterval) {
+			clearInterval(slideInterval);
+			slideInterval = null;
+		}
+	}
+
 	function updateSlide() {
-		// Update slide based on current installation step
+		// This function is kept for compatibility but slideshow is now time-based
+		// Show final slide when installation is complete
 		if (isComplete) {
-			currentSlide = totalSlides; // Show last slide when complete
-		} else {
-			currentSlide = Math.min(currentStepIndex + 1, totalSlides);
+			stopSlideshow();
+			currentSlide = totalSlides;
 		}
 	}
 
 	async function startInstallation() {
 		isInstalling = true;
 		installationLog = [`Starting blossomOS installation on ${selectedDisk}...`];
+
+		// Start the time-based slideshow
+		startSlideshow();
 
 		try {
 			// Set up progress listener
@@ -116,6 +141,7 @@
 			console.error('Error keys:', Object.keys(installError));
 			console.error('Full error object:', JSON.stringify(installError, null, 2));
 			isInstalling = false;
+			stopSlideshow(); // Stop slideshow on error
 
 			// Extract detailed error information with better debugging
 			let errorMessage = 'Unknown error occurred';
@@ -211,8 +237,6 @@
 			installSteps[stepIndex].progress = Math.min(progress, 100);
 			currentStepIndex = stepIndex;
 
-			updateSlide();
-
 			const stepTitles: Record<string, string> = {
 				analyze: 'Analyzing disk layout',
 				'partition-alongside': 'Creating partition alongside existing data',
@@ -289,6 +313,8 @@
 		if (window.electron) {
 			window.electron.removeInstallationProgressListener();
 		}
+		// Clean up slideshow interval
+		stopSlideshow();
 	});
 </script>
 
@@ -433,6 +459,7 @@
 								overallProgress = 0;
 								installationLog = [];
 								currentSlide = 1;
+								stopSlideshow(); // Clean up any existing slideshow
 								startInstallation();
 							}}
 						>
