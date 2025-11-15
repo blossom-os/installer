@@ -425,20 +425,21 @@
 					</div>
 				</div>
 
-				<!-- Installation Log (Always visible on error) -->
-				<div class="pt-4 border-t">
-					<h4 class="font-medium mb-2">Installation Log</h4>
-					<div
-						class="p-3 bg-muted/50 rounded-lg max-h-48 overflow-y-auto font-mono text-xs"
-					>
-						{#each installationLog as logEntry}
-							<div class="text-muted-foreground mb-1">{logEntry}</div>
-						{/each}
-						{#if installationLog.length === 0}
-							<div class="text-muted-foreground">No log entries available.</div>
-						{/if}
+				{#if !error}
+					<div class="pt-4 border-t">
+						<h4 class="font-medium mb-2">Installation Log</h4>
+						<div
+							class="p-3 bg-muted/50 rounded-lg max-h-48 overflow-y-auto font-mono text-xs"
+						>
+							{#each installationLog as logEntry}
+								<div class="text-muted-foreground mb-1">{logEntry}</div>
+							{/each}
+							{#if installationLog.length === 0}
+								<div class="text-muted-foreground">No log entries available.</div>
+							{/if}
+						</div>
 					</div>
-				</div>
+				{/if}
 			{:else if isComplete}
 				<!-- Success Message -->
 				<div class="text-center space-y-4">
