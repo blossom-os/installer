@@ -1,6 +1,41 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { exec } = require('child_process');
+const fs = require('fs');
 const path = require('path');
+
+// Logging function that writes to both console and file
+const LOG_FILE = '/home/liveuser/installer.log';
+function log(...args) {
+	const timestamp = new Date().toISOString();
+	const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+	const logEntry = `[${timestamp}] ${message}\n`;
+	
+	// Write to console
+	console.log(...args);
+	
+	// Write to log file
+	try {
+		fs.appendFileSync(LOG_FILE, logEntry);
+	} catch (error) {
+		console.error('Failed to write to log file:', error.message);
+	}
+}
+
+function logError(...args) {
+	const timestamp = new Date().toISOString();
+	const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+	const logEntry = `[${timestamp}] ERROR: ${message}\n`;
+	
+	// Write to console
+	console.error(...args);
+	
+	// Write to log file
+	try {
+		fs.appendFileSync(LOG_FILE, logEntry);
+	} catch (error) {
+		console.error('Failed to write to log file:', error.message);
+	}
+}
 
 // Try to require electron-context-menu safely
 let contextMenu;
@@ -8,14 +43,14 @@ try {
 	const contextMenuModule = require('electron-context-menu');
 	contextMenu = contextMenuModule.default || contextMenuModule;
 } catch (e) {
-	console.log('Could not load electron-context-menu:', e.message);
+	log('Could not load electron-context-menu:', e.message);
 	contextMenu = () => {}; // Fallback function
 }
 
 try {
 	require('electron-reloader')(module);
 } catch (e) {
-	console.error(e);
+	logError(e);
 }
 
 const port = process.env.PORT || 5173;
@@ -55,7 +90,7 @@ function createWindow() {
 
 function loadVite(port) {
 	mainWindow.loadURL(`http://localhost:${port}`).catch((e) => {
-		console.log('Error loading URL, retrying', e);
+		log('Error loading URL, retrying', e);
 		setTimeout(() => {
 			loadVite(port);
 		}, 200);
@@ -92,22 +127,22 @@ ipcMain.on('to-main', (event, count) => {
 ipcMain.on('shutdown', (event) => {
 	exec('sudo poweroff', (error, stdout, stderr) => {
 		if (error) {
-			console.error('Shutdown error:', error);
+			logError('Shutdown error:', error);
 			return;
 		}
-		console.log('Shutdown command executed successfully');
+		log('Shutdown command executed successfully');
 	});
 });
 
 ipcMain.on('run-command', (event, command) => {
 	exec(command, (error, stdout, stderr) => {
 		if (error) {
-			console.error(`Command error (${command}):`, error);
+			logError(`Command error (${command}):`, error);
 			return;
 		}
-		console.log(`Command executed successfully: ${command}`);
-		if (stdout) console.log('stdout:', stdout);
-		if (stderr) console.log('stderr:', stderr);
+		log(`Command executed successfully: ${command}`);
+		if (stdout) log('stdout:', stdout);
+		if (stderr) log('stderr:', stderr);
 	});
 });
 
@@ -116,7 +151,7 @@ ipcMain.handle('scan-wifi', async (event) => {
 	return new Promise((resolve, reject) => {
 		exec('nmcli -t -f SSID,SIGNAL,SECURITY dev wifi', (error, stdout, stderr) => {
 			if (error) {
-				console.error('WiFi scan error:', error);
+				logError('WiFi scan error:', error);
 				resolve([]);
 				return;
 			}
@@ -221,7 +256,7 @@ ipcMain.handle('connect-wifi', async (event, ssid, password) => {
 		
 		exec(command, (error, stdout, stderr) => {
 			if (error) {
-				console.error('WiFi connection error:', error);
+				logError('WiFi connection error:', error);
 				// Check if it's a password error
 				const isPasswordError = stderr.includes('Secrets were required') || 
 									   stderr.includes('802-1x authentication') ||
@@ -236,7 +271,7 @@ ipcMain.handle('connect-wifi', async (event, ssid, password) => {
 				return;
 			}
 			
-			console.log(`Successfully connected to ${ssid}`);
+			log(`Successfully connected to ${ssid}`);
 			resolve({ success: true, message: `Connected to ${ssid}` });
 		});
 	});
@@ -263,12 +298,12 @@ ipcMain.handle('delete-wifi-config', async (event, ssid) => {
 	return new Promise((resolve) => {
 		exec(`sudo nmcli connection delete "${ssid}"`, (error, stdout, stderr) => {
 			if (error) {
-				console.error('Failed to delete WiFi config:', error);
+				logError('Failed to delete WiFi config:', error);
 				resolve(false);
 				return;
 			}
 			
-			console.log(`Deleted WiFi configuration for ${ssid}`);
+			log(`Deleted WiFi configuration for ${ssid}`);
 			resolve(true);
 		});
 	});
@@ -279,7 +314,7 @@ ipcMain.handle('scan-disks', async (event) => {
 	return new Promise((resolve, reject) => {
 		exec('lsblk -J -o NAME,SIZE,MODEL,TYPE,TRAN,MOUNTPOINT,FSTYPE', (error, stdout, stderr) => {
 			if (error) {
-				console.error('Disk scan error:', error);
+				logError('Disk scan error:', error);
 				resolve([]);
 				return;
 			}
@@ -320,7 +355,7 @@ ipcMain.handle('scan-disks', async (event) => {
 				
 				resolve(disks);
 			} catch (parseError) {
-				console.error('Failed to parse disk data:', parseError);
+				logError('Failed to parse disk data:', parseError);
 				resolve([]);
 			}
 		});
@@ -340,60 +375,60 @@ ipcMain.handle('check-boot-mode', async (event) => {
 ipcMain.handle('install-system', async (event, diskPath) => {
 	return new Promise(async (resolve, reject) => {
 		try {
-			console.log(`Starting installation on ${diskPath}`);
+			log(`Starting installation on ${diskPath}`);
 			
 			const isUEFI = await new Promise((res) => {
 				exec('ls /sys/firmware/efi', (error) => {
-					console.log('Boot mode check:', error ? 'BIOS' : 'UEFI');
+					log('Boot mode check:', error ? 'BIOS' : 'UEFI');
 					res(!error);
 				});
 			});
 			
 			// Step 1: Analyze disk and create partitions
 			event.sender.send('installation-progress', { step: 'analyze', progress: 10 });
-			console.log('Analyzing disk...');
+			log('Analyzing disk...');
 			
 			const hasNTFS = await checkForNTFS(diskPath);
 			const hasFreeSpace = await checkFreeSpace(diskPath);
-			console.log(`NTFS detected: ${hasNTFS}, Free space: ${hasFreeSpace}`);
+			log(`NTFS detected: ${hasNTFS}, Free space: ${hasFreeSpace}`);
 			
 			let installPartition;
 			if (hasNTFS && hasFreeSpace) {
 				// Install alongside Windows
 				event.sender.send('installation-progress', { step: 'partition-alongside', progress: 20 });
-				console.log('Creating partition alongside existing data...');
+				log('Creating partition alongside existing data...');
 				installPartition = await createAlongsidePartition(diskPath, isUEFI);
 			} else {
 				// Wipe entire disk
 				event.sender.send('installation-progress', { step: 'partition-wipe', progress: 20 });
-				console.log('Wiping and partitioning disk...');
+				log('Wiping and partitioning disk...');
 				installPartition = await wipeAndPartition(diskPath, isUEFI);
 			}
-			console.log('Partitions created:', installPartition);
+			log('Partitions created:', installPartition);
 			
 			// Step 2: Format partitions
 			event.sender.send('installation-progress', { step: 'format', progress: 30 });
-			console.log('Formatting partitions...');
+			log('Formatting partitions...');
 			await formatPartitions(installPartition, isUEFI);
 			
 			// Step 3: Mount partitions
 			event.sender.send('installation-progress', { step: 'mount', progress: 40 });
-			console.log('Mounting partitions...');
+			log('Mounting partitions...');
 			await mountPartitions(installPartition, isUEFI);
 			
 			// Step 4: Install base system
 			event.sender.send('installation-progress', { step: 'install-base', progress: 50 });
-			console.log('Installing base system...');
+			log('Installing base system...');
 			await installBaseSystem();
 			
 			// Step 5: Configure system
 			event.sender.send('installation-progress', { step: 'configure', progress: 70 });
-			console.log('Configuring system...');
+			log('Configuring system...');
 			await configureSystem();
 			
 			// Step 6: Install bootloader
 			event.sender.send('installation-progress', { step: 'bootloader', progress: 85 });
-			console.log('Installing bootloader...');
+			log('Installing bootloader...');
 			if (isUEFI) {
 				await installEFIBootloader(installPartition.root);
 			} else {
@@ -402,19 +437,19 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			
 			// Step 7: Copy blossomOS files
 			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
-			console.log('Copying blossomOS files...');
+			log('Copying blossomOS files...');
 			await copyBlossomFiles();
 			await createPacmanHook();
 			
 			// Step 8: Cleanup
 			event.sender.send('installation-progress', { step: 'cleanup', progress: 100 });
-			console.log('Cleaning up...');
+			log('Cleaning up...');
 			await cleanupMounts();
 			
-			console.log('Installation completed successfully!');
+			log('Installation completed successfully!');
 			resolve({ success: true, message: 'Installation completed successfully!' });
 		} catch (error) {
-			console.error('Installation error:', error);
+			logError('Installation error:', error);
 			
 			// Properly serialize error information for IPC
 			let errorMessage = 'Unknown error occurred';
@@ -441,12 +476,12 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 				};
 				
 				// Log detailed error information
-				console.error('Error type:', errorDetails.type);
-				console.error('Error message:', errorDetails.message);
-				console.error('Error stderr:', errorDetails.stderr);
-				console.error('Error stdout:', errorDetails.stdout);
-				console.error('Error command:', errorDetails.command);
-				console.error('Error stack:', errorDetails.stack);
+				logError('Error type:', errorDetails.type);
+				logError('Error message:', errorDetails.message);
+				logError('Error stderr:', errorDetails.stderr);
+				logError('Error stdout:', errorDetails.stdout);
+				logError('Error command:', errorDetails.command);
+				logError('Error stack:', errorDetails.stack);
 			}
 			
 			// Send detailed error information that can be properly serialized
@@ -462,15 +497,15 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 // Helper functions for installation
 function execPromise(command) {
 	return new Promise((resolve, reject) => {
-		console.log(`Executing: ${command}`);
+		log(`Executing: ${command}`);
 		exec(command, (error, stdout, stderr) => {
 			if (error) {
-				console.error(`Command failed: ${command}`);
-				console.error(`Error code: ${error.code}`);
-				console.error(`Error signal: ${error.signal}`);
-				console.error(`Error message: ${error.message}`);
-				console.error(`Stdout: ${stdout}`);
-				console.error(`Stderr: ${stderr}`);
+				logError(`Command failed: ${command}`);
+				logError(`Error code: ${error.code}`);
+				logError(`Error signal: ${error.signal}`);
+				logError(`Error message: ${error.message}`);
+				logError(`Stdout: ${stdout}`);
+				logError(`Stderr: ${stderr}`);
 				
 				// Create a serializable error object
 				const execError = {
@@ -484,9 +519,9 @@ function execPromise(command) {
 				
 				reject(execError);
 			} else {
-				console.log(`Command success: ${command}`);
-				if (stdout) console.log(`Stdout: ${stdout}`);
-				if (stderr) console.log(`Stderr: ${stderr}`);
+				log(`Command success: ${command}`);
+				if (stdout) log(`Stdout: ${stdout}`);
+				if (stderr) log(`Stderr: ${stderr}`);
 				resolve({ stdout, stderr });
 			}
 		});
@@ -511,7 +546,7 @@ async function checkFreeSpace(diskPath) {
 		const result = await execPromiseWithSudo(`parted ${diskPath} print free`);
 		return result.stdout.includes('Free Space');
 	} catch (error) {
-		console.log(`Could not check free space on ${diskPath}:`, error.stderr);
+		log(`Could not check free space on ${diskPath}:`, error.stderr);
 		return false;
 	}
 }
