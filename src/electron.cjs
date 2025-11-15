@@ -739,6 +739,30 @@ export async function installMinimalKDEChroot() {
     "
   `);
 
+  await execPromiseWithSudo(`
+	${CHROOT} bash -c "
+	  useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}
+	"
+  `);
+
+  await execPromiseWithSudo(`
+	${CHROOT} bash -c "
+	  passwd -d ${USER}
+	"
+  `);
+
+  await execPromiseWithSudo(`
+	${CHROOT} bash -c "
+	  sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+	"
+  `);
+
+  await execPromiseWithSudo(`
+	${CHROOT} bash -c "
+	  sudo -u ${USER} bash -c 'curl -fsSL https://bun.sh/install | bash'
+	"
+  `);
+
   log('Configuring SDDM autologin...');
 
   await execPromiseWithSudo(`
@@ -775,7 +799,7 @@ sleep 2
 
 # Run the Blossomos installer
 cd /opt/blossomos-installer/ || exit 1
-bun dev --postinstall
+/home/liveuser/.bun/bin/bun dev --postinstall
 EOF"
   `);
 
