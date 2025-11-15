@@ -213,10 +213,10 @@ ipcMain.handle('connect-wifi', async (event, ssid, password) => {
 		let command;
 		if (password) {
 			// For secured networks
-			command = `nmcli dev wifi connect "${ssid}" password "${password}"`;
+			command = `sudo nmcli dev wifi connect "${ssid}" password "${password}"`;
 		} else {
 			// For open networks
-			command = `nmcli dev wifi connect "${ssid}"`;
+			command = `sudo nmcli dev wifi connect "${ssid}"`;
 		}
 		
 		exec(command, (error, stdout, stderr) => {
@@ -261,7 +261,7 @@ ipcMain.handle('check-saved-wifi-config', async (event, ssid) => {
 // Delete WiFi connection configuration
 ipcMain.handle('delete-wifi-config', async (event, ssid) => {
 	return new Promise((resolve) => {
-		exec(`nmcli connection delete "${ssid}"`, (error, stdout, stderr) => {
+		exec(`sudo nmcli connection delete "${ssid}"`, (error, stdout, stderr) => {
 			if (error) {
 				console.error('Failed to delete WiFi config:', error);
 				resolve(false);
@@ -574,90 +574,90 @@ async function mountPartitions(partitions, isUEFI) {
 
 async function installBaseSystem() {
 	// Update package databases
-	await execPromise(`pacman -Sy`);
+	await execPromiseWithSudo(`pacman -Sy`);
 	
 	// Install base system
-	await execPromise(`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs`);
+	await execPromiseWithSudo(`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs`);
 	
 	// Generate fstab
-	await execPromise(`genfstab -U /mnt >> /mnt/etc/fstab`);
+	await execPromiseWithSudo(`genfstab -U /mnt >> /mnt/etc/fstab`);
 }
 
 async function configureSystem() {
 	// Set timezone
-	await execPromise(`arch-chroot /mnt ln -sf /usr/share/zoneinfo/UTC /etc/localtime`);
-	await execPromise(`arch-chroot /mnt hwclock --systohc`);
+	await execPromiseWithSudo(`arch-chroot /mnt ln -sf /usr/share/zoneinfo/UTC /etc/localtime`);
+	await execPromiseWithSudo(`arch-chroot /mnt hwclock --systohc`);
 	
 	// Configure locale
-	await execPromise(`arch-chroot /mnt sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen`);
-	await execPromise(`arch-chroot /mnt locale-gen`);
-	await execPromise(`echo 'LANG=en_US.UTF-8' > /mnt/etc/locale.conf`);
+	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen`);
+	await execPromiseWithSudo(`arch-chroot /mnt locale-gen`);
+	await execPromiseWithSudo(`echo 'LANG=en_US.UTF-8' | tee /mnt/etc/locale.conf`);
 	
 	// Set hostname
-	await execPromise(`echo 'blossomos' > /mnt/etc/hostname`);
+	await execPromiseWithSudo(`echo 'blossomos' | tee /mnt/etc/hostname`);
 	
 	// Configure hosts file
-	const hostsContent = `127.0.0.1\\tlocalhost\\n::1\\t\\tlocalhost\\n127.0.1.1\\tblossomos.localdomain\\tblossomos`;
-	await execPromise(`echo -e '${hostsContent}' > /mnt/etc/hosts`);
+	const hostsContent = `127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\tblossomos.localdomain\tblossomos`;
+	await execPromiseWithSudo(`echo -e '${hostsContent}' | tee /mnt/etc/hosts`);
 	
 	// Set root password (empty for recovery)
-	await execPromise(`arch-chroot /mnt passwd -d root`);
+	await execPromiseWithSudo(`arch-chroot /mnt passwd -d root`);
 	
 	// Enable essential services
-	await execPromise(`arch-chroot /mnt systemctl enable NetworkManager`);
+	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable NetworkManager`);
 }
 
 async function installEFIBootloader(rootPartition) {
 	// Install systemd-boot
-	await execPromise(`arch-chroot /mnt bootctl install`);
+	await execPromiseWithSudo(`arch-chroot /mnt bootctl install`);
 	
 	// Create bootloader entry
 	const rootUUID = await getRootUUID(rootPartition);
-	const bootEntry = `title blossomOS\\nlinux /vmlinuz-linux\\ninitrd /initramfs-linux.img\\noptions root=UUID=${rootUUID} rootflags=subvol=@ rw quiet`;
+	const bootEntry = `title blossomOS\nlinux /vmlinuz-linux\ninitrd /initramfs-linux.img\noptions root=UUID=${rootUUID} rootflags=subvol=@ rw quiet`;
 	
-	await execPromise(`echo -e '${bootEntry}' > /mnt/boot/loader/entries/blossomos.conf`);
+	await execPromiseWithSudo(`echo -e '${bootEntry}' | tee /mnt/boot/loader/entries/blossomos.conf`);
 	
 	// Configure loader
-	const loaderConfig = `default blossomos\\ntimeout 3\\neditor 0`;
-	await execPromise(`echo -e '${loaderConfig}' > /mnt/boot/loader/loader.conf`);
+	const loaderConfig = `default blossomos\ntimeout 3\neditor 0`;
+	await execPromiseWithSudo(`echo -e '${loaderConfig}' | tee /mnt/boot/loader/loader.conf`);
 }
 
 async function installGRUB(diskPath) {
 	// Install GRUB packages
-	await execPromise(`arch-chroot /mnt pacman -S --noconfirm grub`);
+	await execPromiseWithSudo(`arch-chroot /mnt pacman -S --noconfirm grub`);
 	
 	// Install GRUB to disk
-	await execPromise(`arch-chroot /mnt grub-install --target=i386-pc ${diskPath}`);
+	await execPromiseWithSudo(`arch-chroot /mnt grub-install --target=i386-pc ${diskPath}`);
 	
 	// Generate GRUB config
-	await execPromise(`arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg`);
+	await execPromiseWithSudo(`arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg`);
 }
 
 async function copyBlossomFiles() {
 	// Copy blossomOS branding files
-	await execPromise(`cp /etc/issue /mnt/etc/issue`);
-	await execPromise(`cp /etc/os-release /mnt/etc/os-release`);
-	await execPromise(`cp /etc/motd /mnt/etc/motd`);
+	await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue`);
+	await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release`);
+	await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd`);
 }
 
 async function createPacmanHook() {
 	// Create hooks directory
-	await execPromise(`mkdir -p /mnt/etc/pacman.d/hooks`);
+	await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
 	
 	// Create hook to preserve blossomOS files
-	const hookContent = `[Trigger]\\nOperation = Install\\nOperation = Upgrade\\nType = Package\\nTarget = filesystem\\n\\n[Action]\\nDescription = Preserving blossomOS branding files...\\nWhen = PostTransaction\\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
+	const hookContent = `[Trigger]\nOperation = Install\nOperation = Upgrade\nType = Package\nTarget = filesystem\n\n[Action]\nDescription = Preserving blossomOS branding files...\nWhen = PostTransaction\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
 	
-	await execPromise(`echo -e '${hookContent}' > /mnt/etc/pacman.d/hooks/blossom-branding.hook`);
+	await execPromiseWithSudo(`echo -e '${hookContent}' | tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`);
 	
 	// Backup original files
-	await execPromise(`cp /mnt/etc/issue /mnt/etc/issue.blossom`);
-	await execPromise(`cp /mnt/etc/os-release /mnt/etc/os-release.blossom`);
-	await execPromise(`cp /etc/motd /mnt/etc/motd.blossom`);
+	await execPromiseWithSudo(`cp /mnt/etc/issue /mnt/etc/issue.blossom`);
+	await execPromiseWithSudo(`cp /mnt/etc/os-release /mnt/etc/os-release.blossom`);
+	await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
 }
 
 async function cleanupMounts() {
 	// Unmount all partitions
-	await execPromise(`umount -R /mnt`).catch(() => {});
+	await execPromiseWithSudo(`umount -R /mnt`).catch(() => {});
 }
 
 async function getLastPartitionNumber(diskPath) {
@@ -681,7 +681,7 @@ async function getLastPartitionNumber(diskPath) {
 
 async function getRootUUID(partition) {
 	try {
-		const result = await execPromise(`blkid -s UUID -o value ${partition}`);
+		const result = await execPromiseWithSudo(`blkid -s UUID -o value ${partition}`);
 		return result.stdout.trim();
 	} catch (error) {
 		return '';
