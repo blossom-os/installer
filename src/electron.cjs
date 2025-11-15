@@ -724,7 +724,7 @@ async function installBaseSystem() {
 	await installMinimalKDEChroot();
 }
 
-export async function installMinimalKDEChroot() {
+async function installMinimalKDEChroot() {
   const CHROOT = "arch-chroot /mnt";
   const USER = "liveuser";
 
