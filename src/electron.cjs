@@ -730,7 +730,7 @@ async function installMinimalKDEChroot() {
 
 	log('Starting minimal KDE installation in chroot...');
 
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop sddm flatpak"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop sddm flatpak unzip"`);
 
 	await execPromiseWithSudo(`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`);
 
