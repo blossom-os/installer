@@ -65,8 +65,8 @@
       },
       "log": {
         "title": "Installationsprotokoll",
-        "show": "Anzeigen",
-        "hide": "Verstecken",
+        "show": "Protokoll anzeigen",
+        "hide": "Protokoll ausblenden",
         "empty": "Keine Protokolleinträge verfügbar.",
         "toggle": "Installationsprotokoll",
         "starting": "Starte blossomOS Installation auf"
@@ -74,9 +74,9 @@
       "actions": {
         "tryAgain": "Nochmal versuchen",
         "returnToRecovery": "Zurück zur Recovery",
-        "shutdown": "Herunterfahren",
-        "restart": "Neustarten",
-        "computer": "Computer"
+        "shutdown": "Computer herunterfahren",
+        "restart": "Computer neu starten",
+        "computer": ""
       }
     },
     "nvidia": {

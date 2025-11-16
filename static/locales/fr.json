@@ -65,18 +65,18 @@
       },
       "log": {
         "title": "Journal d'installation",
-        "show": "Afficher",
-        "hide": "Masquer",
+        "show": "Afficher le journal",
+        "hide": "Masquer le journal",
         "empty": "Aucune entrée de journal disponible.",
         "toggle": "Journal d'installation",
-        "starting": "Début de l'installation de blossomOS sur"
+        "starting": "Démarrage de l'installation de blossomOS sur"
       },
       "actions": {
         "tryAgain": "Réessayer",
         "returnToRecovery": "Retour à la récupération",
-        "shutdown": "Éteindre",
-        "restart": "Redémarrer",
-        "computer": "Ordinateur"
+        "shutdown": "Éteindre l'ordinateur",
+        "restart": "Redémarrer l'ordinateur",
+        "computer": ""
       }
     },
     "nvidia": {

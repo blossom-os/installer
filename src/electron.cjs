@@ -534,6 +534,37 @@ ipcMain.handle('detect-nvidia', async (event) => {
 	});
 });
 
+// Store language and keyboard settings
+let installerSettings = {
+	language: 'en',
+	keyboard: 'us',
+	locale: 'en_US.UTF-8'
+};
+
+const languageToLocaleMap = {
+	'en': 'en_US.UTF-8',
+	'de': 'de_DE.UTF-8', 
+	'fr': 'fr_FR.UTF-8',
+	'es': 'es_ES.UTF-8'
+};
+
+ipcMain.handle('set-language', async (event, languageCode) => {
+	installerSettings.language = languageCode;
+	installerSettings.locale = languageToLocaleMap[languageCode] || 'en_US.UTF-8';
+	log(`Language set to: ${languageCode} (${installerSettings.locale})`);
+	return true;
+});
+
+ipcMain.handle('set-keyboard', async (event, keyboardCode) => {
+	installerSettings.keyboard = keyboardCode;
+	log(`Keyboard set to: ${keyboardCode}`);
+	return true;
+});
+
+ipcMain.handle('get-installer-settings', async (event) => {
+	return installerSettings;
+});
+
 // Install blossomOS
 ipcMain.handle('install-system', async (event, diskPath) => {
 	return new Promise(async (resolve, reject) => {
@@ -594,9 +625,6 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			event.sender.send('installation-progress', { step: 'configure', progress: 70 });
 			log('Configuring system...');
 			
-			// Use default configuration for now - in the future this could be passed from frontend
-			const locale = 'en_US.UTF-8';
-			const keyboardLayout = 'us';
 			let timezone = 'UTC';
 			
 			// Try to get timezone by IP
@@ -611,7 +639,9 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 				logError('Failed to detect timezone, using UTC:', error);
 			}
 			
-			await configureSystem(locale, keyboardLayout, timezone);
+			// Use saved installer settings for configuration
+			log(`Using installer settings - Language: ${installerSettings.language}, Locale: ${installerSettings.locale}, Keyboard: ${installerSettings.keyboard}, Timezone: ${timezone}`);
+			await configureSystem(installerSettings.locale, installerSettings.keyboard, timezone);
 
 			// Step 6: Install bootloader
 			event.sender.send('installation-progress', { step: 'bootloader', progress: 85 });

@@ -99,6 +99,16 @@
 				await (window as any).installer.setKeyboard?.(selectedKeyboard);
 			}
 
+			// Verify settings were saved to main process
+			if (typeof window !== 'undefined' && window.electron) {
+				try {
+					const settings = await window.electron.getInstallerSettings();
+					console.log('Saved installer settings:', settings);
+				} catch (error) {
+					console.warn('Could not verify installer settings:', error);
+				}
+			}
+
 			console.log('Language saved:', selectedLanguage);
 			console.log('Keyboard saved:', selectedKeyboard);
 

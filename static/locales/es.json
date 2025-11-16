@@ -65,18 +65,18 @@
       },
       "log": {
         "title": "Registro de instalación",
-        "show": "Mostrar",
-        "hide": "Ocultar",
+        "show": "Mostrar registro",
+        "hide": "Ocultar registro",
         "empty": "No hay entradas de registro disponibles.",
         "toggle": "Registro de instalación",
-        "starting": "Iniciando instalación de blossomOS en"
+        "starting": "Iniciando la instalación de blossomOS en"
       },
       "actions": {
         "tryAgain": "Intentar de nuevo",
-        "returnToRecovery": "Volver a recuperación",
-        "shutdown": "Apagar",
-        "restart": "Reiniciar",
-        "computer": "Computadora"
+        "returnToRecovery": "Volver a la recuperación",
+        "shutdown": "Apagar computadora",
+        "restart": "Reiniciar computadora",
+        "computer": ""
       }
     },
     "nvidia": {

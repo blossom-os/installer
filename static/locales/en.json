@@ -65,8 +65,8 @@
       },
       "log": {
         "title": "Installation Log",
-        "show": "Show",
-        "hide": "Hide",
+        "show": "Show Log",
+        "hide": "Hide Log",
         "empty": "No log entries available.",
         "toggle": "Installation Log",
         "starting": "Starting blossomOS installation on"
@@ -74,9 +74,9 @@
       "actions": {
         "tryAgain": "Try Again",
         "returnToRecovery": "Return to Recovery",
-        "shutdown": "Shutdown",
-        "restart": "Restart",
-        "computer": "Computer"
+        "shutdown": "Shutdown Computer",
+        "restart": "Restart Computer",
+        "computer": ""
       }
     },
     "nvidia": {

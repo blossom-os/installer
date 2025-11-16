@@ -70,12 +70,13 @@ contextBridge.exposeInMainWorld('electron', {
 		return ipcRenderer.invoke('get-available-keyboard-layouts');
 	},
 	setLanguage: (languageCode) => {
-		// This could store the language preference for the installer
-		return Promise.resolve(languageCode);
+		return ipcRenderer.invoke('set-language', languageCode);
 	},
 	setKeyboard: (keyboardCode) => {
-		// This could store the keyboard preference for the installer  
-		return Promise.resolve(keyboardCode);
+		return ipcRenderer.invoke('set-keyboard', keyboardCode);
+	},
+	getInstallerSettings: () => {
+		return ipcRenderer.invoke('get-installer-settings');
 	},
 	loadTranslations: async (languageCode) => {
 		try {
@@ -103,12 +104,16 @@ contextBridge.exposeInMainWorld('installer', {
 		if (typeof localStorage !== 'undefined') {
 			localStorage.setItem('installer-language', languageCode);
 		}
+		// Also save to electron main process
+		ipcRenderer.invoke('set-language', languageCode);
 		return Promise.resolve(languageCode);
 	},
 	setKeyboard: (keyboardCode) => {
 		if (typeof localStorage !== 'undefined') {
 			localStorage.setItem('installer-keyboard', keyboardCode);
 		}
+		// Also save to electron main process  
+		ipcRenderer.invoke('set-keyboard', keyboardCode);
 		return Promise.resolve(keyboardCode);
 	},
 	getLanguage: () => {
