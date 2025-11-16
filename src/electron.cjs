@@ -891,6 +891,11 @@ async function installBaseSystem() {
 	// Generate fstab
 	await execPromise(`genfstab -U /mnt | sudo tee /mnt/etc/fstab`);
 
+	// Initialize pacman keyring
+	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --init`);
+	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --populate archlinux`);
+	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --refresh-keys`);
+
 	// Install minimal KDE in chroot
 	await installMinimalKDEChroot();
 }
@@ -1009,11 +1014,6 @@ EOF`);
 		log('Error checking/installing NVIDIA drivers:', error.message);
 		// Don't fail the installation if NVIDIA installation fails
 	}
-
-	// Initialize pacman keyring
-	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --init`);
-	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --populate archlinux`);
-	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --refresh-keys`);
 }
 
 async function installEFIBootloader(rootPartition) {
