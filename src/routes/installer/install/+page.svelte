@@ -70,7 +70,6 @@
 					returnToRecovery?: string;
 					shutdown?: string;
 					restart?: string;
-					computer?: string;
 				};
 			};
 		};
@@ -724,7 +723,6 @@
 							{shouldRestart
 								? translations?.installer?.install?.actions?.restart || 'Restart'
 								: translations?.installer?.install?.actions?.shutdown || 'Shutdown'}
-							{translations?.installer?.install?.actions?.computer || 'Computer'}
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
@@ -813,9 +811,8 @@
 				<div class="pt-4 border-t">
 					<Button variant="ghost" onclick={toggleLog} class="text-xs">
 						{showLog
-							? translations?.installer?.install?.log?.hide || 'Hide'
-							: translations?.installer?.install?.log?.show || 'Show'}
-						{translations?.installer?.install?.log?.title || 'Installation Log'}
+							? translations?.installer?.install?.log?.hide || 'Hide Log'
+							: translations?.installer?.install?.log?.show || 'Show Log'}
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
