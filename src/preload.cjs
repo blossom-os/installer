@@ -55,5 +55,96 @@ contextBridge.exposeInMainWorld('electron', {
 	},
 	checkPostinstallMode: () => {
 		return ipcRenderer.invoke('check-postinstall-mode');
+	},
+	// Localization functions
+	getTimezoneByIP: () => {
+		return ipcRenderer.invoke('get-timezone-by-ip');
+	},
+	getAvailableLocales: () => {
+		return ipcRenderer.invoke('get-available-locales');
+	},
+	getAvailableKeyboardLayouts: () => {
+		return ipcRenderer.invoke('get-available-keyboard-layouts');
+	},
+	setLanguage: (languageCode) => {
+		// This could store the language preference for the installer
+		return Promise.resolve(languageCode);
+	},
+	setKeyboard: (keyboardCode) => {
+		// This could store the keyboard preference for the installer  
+		return Promise.resolve(keyboardCode);
+	},
+	loadTranslations: async (languageCode) => {
+		try {
+			const response = await fetch(`/locales/${languageCode}.json`);
+			return await response.json();
+		} catch (error) {
+			console.error('Failed to load translations:', error);
+			throw error;
+		}
+	}
+});
+
+// Also expose installer-specific functions under window.installer
+contextBridge.exposeInMainWorld('installer', {
+	getAvailableLanguages: () => {
+		return ipcRenderer.invoke('get-available-locales');
+	},
+	getAvailableKeyboards: () => {
+		return ipcRenderer.invoke('get-available-keyboard-layouts');
+	},
+	getTimezone: () => {
+		return ipcRenderer.invoke('get-timezone-by-ip');
+	},
+	setLanguage: (languageCode) => {
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem('installer-language', languageCode);
+		}
+		return Promise.resolve(languageCode);
+	},
+	setKeyboard: (keyboardCode) => {
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem('installer-keyboard', keyboardCode);
+		}
+		return Promise.resolve(keyboardCode);
+	},
+	getLanguage: () => {
+		if (typeof localStorage !== 'undefined') {
+			return Promise.resolve(localStorage.getItem('installer-language') || 'en');
+		}
+		return Promise.resolve('en');
+	},
+	getKeyboard: () => {
+		if (typeof localStorage !== 'undefined') {
+			return Promise.resolve(localStorage.getItem('installer-keyboard') || 'us');
+		}
+		return Promise.resolve('us');
+	},
+	setKeyboard: (keyboardCode) => {
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem('installer-keyboard', keyboardCode);
+		}
+		return Promise.resolve(keyboardCode);
+	},
+	getLanguage: () => {
+		if (typeof localStorage !== 'undefined') {
+			return Promise.resolve(localStorage.getItem('installer-language') || 'en');
+		}
+		return Promise.resolve('en');
+	},
+	getKeyboard: () => {
+		if (typeof localStorage !== 'undefined') {
+			return Promise.resolve(localStorage.getItem('installer-keyboard') || 'us');
+		}
+		return Promise.resolve('us');
+	},
+	loadTranslations: async (languageCode) => {
+		try {
+			const response = await fetch(`/locales/${languageCode}.json`);
+			return await response.json();
+		} catch (error) {
+			console.error('Failed to load translations:', error);
+			throw error;
+		}
 	}
 });

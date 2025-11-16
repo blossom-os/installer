@@ -140,6 +140,80 @@ app.on('activate', () => {
 ipcMain.handle('check-postinstall-mode', async () => {
 	return fs.existsSync('/home/liveuser/.postinstall');
 });
+
+// IPC handler to get timezone based on IP location
+ipcMain.handle('get-timezone-by-ip', async () => {
+	try {
+		log('Attempting to detect timezone via IP geolocation...');
+		const response = await fetch('http://ip-api.com/json/?fields=timezone', {
+			timeout: 10000 // 10 second timeout
+		});
+		
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+		
+		const data = await response.json();
+		log('Geolocation API response:', data);
+		
+		if (data.timezone) {
+			log(`Detected timezone: ${data.timezone}`);
+			return data.timezone;
+		} else {
+			log('No timezone in response, using UTC fallback');
+			return 'UTC';
+		}
+	} catch (error) {
+		logError('Failed to get timezone by IP:', error);
+		log('Using UTC as fallback timezone');
+		return 'UTC'; // Fallback to UTC
+	}
+});
+
+// IPC handler to get available locales
+ipcMain.handle('get-available-locales', async () => {
+	try {
+		const result = await execPromise('locale -a');
+		const locales = result.stdout.split('\n').filter(locale => locale.includes('UTF-8') || locale.includes('utf8'));
+		
+		// Common locales with display names
+		const commonLocales = [
+			{ code: 'en_US.UTF-8', name: 'English (United States)', lang: 'en' },
+			{ code: 'en_GB.UTF-8', name: 'English (United Kingdom)', lang: 'en' },
+			{ code: 'de_DE.UTF-8', name: 'Deutsch (Deutschland)', lang: 'de' },
+			{ code: 'fr_FR.UTF-8', name: 'Français (France)', lang: 'fr' },
+			{ code: 'es_ES.UTF-8', name: 'Español (España)', lang: 'es' },
+			{ code: 'it_IT.UTF-8', name: 'Italiano (Italia)', lang: 'it' },
+			{ code: 'pt_PT.UTF-8', name: 'Português (Portugal)', lang: 'pt' },
+			{ code: 'ru_RU.UTF-8', name: 'Русский (Россия)', lang: 'ru' },
+			{ code: 'zh_CN.UTF-8', name: '中文 (中国)', lang: 'zh' },
+			{ code: 'ja_JP.UTF-8', name: '日本語 (日本)', lang: 'ja' }
+		];
+		
+		return commonLocales;
+	} catch (error) {
+		logError('Failed to get available locales:', error);
+		return [{ code: 'en_US.UTF-8', name: 'English (United States)', lang: 'en' }];
+	}
+});
+
+// IPC handler to get available keyboard layouts
+ipcMain.handle('get-available-keyboard-layouts', async () => {
+	const keyboardLayouts = [
+		{ code: 'us', name: 'US English', lang: 'en' },
+		{ code: 'gb', name: 'UK English', lang: 'en' },
+		{ code: 'de', name: 'German', lang: 'de' },
+		{ code: 'fr', name: 'French', lang: 'fr' },
+		{ code: 'es', name: 'Spanish', lang: 'es' },
+		{ code: 'it', name: 'Italian', lang: 'it' },
+		{ code: 'pt', name: 'Portuguese', lang: 'pt' },
+		{ code: 'ru', name: 'Russian', lang: 'ru' },
+		{ code: 'cn', name: 'Chinese', lang: 'zh' },
+		{ code: 'jp', name: 'Japanese', lang: 'ja' }
+	];
+	
+	return keyboardLayouts;
+});
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
 });
@@ -470,7 +544,25 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			// Step 5: Configure system
 			event.sender.send('installation-progress', { step: 'configure', progress: 70 });
 			log('Configuring system...');
-			await configureSystem();
+			
+			// Use default configuration for now - in the future this could be passed from frontend
+			const locale = 'en_US.UTF-8';
+			const keyboardLayout = 'us';
+			let timezone = 'UTC';
+			
+			// Try to get timezone by IP
+			try {
+				const response = await fetch('http://ip-api.com/json/?fields=timezone');
+				const data = await response.json();
+				if (data.timezone) {
+					timezone = data.timezone;
+					log(`Detected timezone: ${timezone}`);
+				}
+			} catch (error) {
+				logError('Failed to detect timezone, using UTC:', error);
+			}
+			
+			await configureSystem(locale, keyboardLayout, timezone);
 
 			// Step 6: Install bootloader
 			event.sender.send('installation-progress', { step: 'bootloader', progress: 85 });
@@ -769,17 +861,42 @@ async function installMinimalKDEChroot() {
 	log('Minimal KDE installation in chroot completed.');
 }
 
-async function configureSystem() {
-	// Set timezone
-	await execPromiseWithSudo(`arch-chroot /mnt ln -sf /usr/share/zoneinfo/UTC /etc/localtime`);
+async function configureSystem(locale = 'en_US.UTF-8', keyboardLayout = 'us', timezone = 'UTC') {
+	log(`Configuring system with locale: ${locale}, keyboard: ${keyboardLayout}, timezone: ${timezone}`);
+	
+	// Set timezone based on IP location or user selection
+	const timezoneFile = timezone.replace('/', '\\/'); // Escape for sed
+	await execPromiseWithSudo(`arch-chroot /mnt ln -sf /usr/share/zoneinfo/${timezone} /etc/localtime`);
 	await execPromiseWithSudo(`arch-chroot /mnt hwclock --systohc`);
 
-	// Configure locale
+	// Configure locale based on selection
+	const localeBase = locale.split('.')[0]; // e.g., en_US from en_US.UTF-8
 	await execPromiseWithSudo(
-		`arch-chroot /mnt sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen`,
+		`arch-chroot /mnt sed -i 's/#${locale}/${locale}/' /etc/locale.gen`,
 	);
+	
+	// Also enable en_US.UTF-8 as fallback if different locale selected
+	if (locale !== 'en_US.UTF-8') {
+		await execPromiseWithSudo(
+			`arch-chroot /mnt sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen`,
+		);
+	}
+	
 	await execPromiseWithSudo(`arch-chroot /mnt locale-gen`);
-	await execPromise(`echo 'LANG=en_US.UTF-8' | sudo tee /mnt/etc/locale.conf`);
+	await execPromise(`echo 'LANG=${locale}' | sudo tee /mnt/etc/locale.conf`);
+
+	// Set keyboard layout
+	await execPromise(`echo 'KEYMAP=${keyboardLayout}' | sudo tee /mnt/etc/vconsole.conf`);
+	
+	// Configure X11 keyboard layout
+	await execPromiseWithSudo(`arch-chroot /mnt mkdir -p /etc/X11/xorg.conf.d`);
+	await execPromise(`cat << EOF | sudo tee /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
+Section "InputClass"
+    Identifier "system-keyboard"
+    MatchIsKeyboard "on"
+    Option "XkbLayout" "${keyboardLayout}"
+EndSection
+EOF`);
 
 	// Set hostname
 	await execPromise(`echo 'blossomos' | sudo tee /mnt/etc/hostname`);

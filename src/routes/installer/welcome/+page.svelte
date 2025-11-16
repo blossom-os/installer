@@ -50,7 +50,7 @@
 
 	function handleNext() {
 		if (internetStatus === 'connected') {
-			goto('/installer/select-disk');
+			goto('/installer/language');
 		} else {
 			// Recheck connection before proceeding
 			checkInternetConnection();

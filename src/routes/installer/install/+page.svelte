@@ -5,6 +5,11 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
+	import {
+		loadLanguageTranslations,
+		translations as translationsStore,
+		getCurrentLanguage,
+	} from '$lib/stores/i18n.js';
 
 	interface InstallStep {
 		id: string;
@@ -15,7 +20,72 @@
 		progress: number;
 	}
 
+	interface Translations {
+		installer?: {
+			install?: {
+				title?: string;
+				description?: string;
+				progress?: string;
+				finalizing?: string;
+				preparing?: string;
+				steps?: {
+					prepare?: string;
+					partition?: string;
+					format?: string;
+					install?: string;
+					bootloader?: string;
+					config?: string;
+					descriptions?: {
+						prepare?: string;
+						partition?: string;
+						format?: string;
+						install?: string;
+						bootloader?: string;
+						config?: string;
+					};
+				};
+				error?: {
+					title?: string;
+					description?: string;
+					message?: string;
+					details?: string;
+					contactSupport?: string;
+				};
+				success?: {
+					title?: string;
+					description?: string;
+					message?: string;
+					restartOption?: string;
+				};
+				log?: {
+					title?: string;
+					show?: string;
+					hide?: string;
+					empty?: string;
+					toggle?: string;
+					starting?: string;
+				};
+				actions?: {
+					tryAgain?: string;
+					returnToRecovery?: string;
+					shutdown?: string;
+					restart?: string;
+					computer?: string;
+				};
+			};
+		};
+		buttons?: {
+			back?: string;
+		};
+	}
+
 	let selectedDisk = sessionStorage.getItem('selectedDisk') || '/dev/sda';
+	let translations: Translations | null = null;
+
+	// Subscribe to translations store
+	translationsStore.subscribe((value) => {
+		translations = value;
+	});
 
 	let installSteps: InstallStep[] = [
 		{
@@ -79,6 +149,73 @@
 	let error: string | null = null;
 	let slideInterval: NodeJS.Timeout | null = null;
 	const totalSlides = 6; // Number of presentation images
+
+	// Initialize steps with translations
+	function initializeSteps() {
+		installSteps = [
+			{
+				id: 'prepare',
+				title: translations?.installer?.install?.steps?.prepare || 'Preparing Installation',
+				description:
+					translations?.installer?.install?.steps?.descriptions?.prepare ||
+					'Initializing installation environment...',
+				completed: false,
+				current: false,
+				progress: 0,
+			},
+			{
+				id: 'partition',
+				title: translations?.installer?.install?.steps?.partition || 'Creating Partitions',
+				description:
+					translations?.installer?.install?.steps?.descriptions?.partition ||
+					'Setting up disk partitions...',
+				completed: false,
+				current: false,
+				progress: 0,
+			},
+			{
+				id: 'format',
+				title: translations?.installer?.install?.steps?.format || 'Formatting Disk',
+				description:
+					translations?.installer?.install?.steps?.descriptions?.format ||
+					'Formatting file systems...',
+				completed: false,
+				current: false,
+				progress: 0,
+			},
+			{
+				id: 'install',
+				title: translations?.installer?.install?.steps?.install || 'Installing System',
+				description:
+					translations?.installer?.install?.steps?.descriptions?.install ||
+					'Copying system files...',
+				completed: false,
+				current: false,
+				progress: 0,
+			},
+			{
+				id: 'bootloader',
+				title:
+					translations?.installer?.install?.steps?.bootloader || 'Installing Bootloader',
+				description:
+					translations?.installer?.install?.steps?.descriptions?.bootloader ||
+					'Setting up GRUB bootloader...',
+				completed: false,
+				current: false,
+				progress: 0,
+			},
+			{
+				id: 'config',
+				title: translations?.installer?.install?.steps?.config || 'Configuring System',
+				description:
+					translations?.installer?.install?.steps?.descriptions?.config ||
+					'Applying final configuration...',
+				completed: false,
+				current: false,
+				progress: 0,
+			},
+		];
+	}
 
 	function startSlideshow() {
 		currentSlide = 1;
@@ -301,7 +438,14 @@
 		showLog = !showLog;
 	}
 
-	onMount(() => {
+	onMount(async () => {
+		// Load saved language and translations
+		const savedLanguage = getCurrentLanguage();
+		await loadLanguageTranslations(savedLanguage);
+
+		// Initialize steps with translations
+		initializeSteps();
+
 		// Auto-start installation (in real app, you might want user confirmation)
 		setTimeout(() => {
 			startInstallation();
@@ -342,20 +486,29 @@
 			{/if}
 			<div>
 				{#if error}
-					<Card.Title>Installation Failed</Card.Title>
+					<Card.Title>
+						{translations?.installer?.install?.error?.title || 'Installation Failed'}
+					</Card.Title>
 					<Card.Description class="mt-2 text-destructive">
-						An error occurred during the installation process.
+						{translations?.installer?.install?.error?.description ||
+							'An error occurred during the installation process.'}
 					</Card.Description>
 				{:else if isComplete}
-					<Card.Title>Installation Complete!</Card.Title>
+					<Card.Title>
+						{translations?.installer?.install?.success?.title ||
+							'Installation Complete!'}
+					</Card.Title>
 					<Card.Description class="mt-2 text-muted-foreground">
-						blossomOS has been successfully installed on your computer.
+						{translations?.installer?.install?.success?.description ||
+							'blossomOS has been successfully installed on your computer.'}
 					</Card.Description>
 				{:else}
-					<Card.Title>Installing blossomOS</Card.Title>
+					<Card.Title>
+						{translations?.installer?.install?.title || 'Installing blossomOS'}
+					</Card.Title>
 					<Card.Description class="mt-2 text-muted-foreground">
-						Please wait while blossomOS is installed on your computer. This may take
-						several minutes.
+						{translations?.installer?.install?.description ||
+							'Please wait while blossomOS is installed on your computer. This may take several minutes.'}
 					</Card.Description>
 				{/if}
 			</div>
@@ -385,10 +538,12 @@
 							/>
 						</svg>
 					</div>
-					<h2 class="text-2xl font-bold text-destructive">Installation Failed</h2>
+					<h2 class="text-2xl font-bold text-destructive">
+						{translations?.installer?.install?.error?.title || 'Installation Failed'}
+					</h2>
 					<p class="text-muted-foreground max-w-md mx-auto">
-						An error occurred during the installation process. Please check the error
-						details below and try again.
+						{translations?.installer?.install?.error?.message ||
+							'An error occurred during the installation process. Please check the error details below and try again.'}
 					</p>
 				</div>
 
@@ -410,7 +565,10 @@
 							/>
 						</svg>
 						<div>
-							<h4 class="font-medium text-destructive">Error Details</h4>
+							<h4 class="font-medium text-destructive">
+								{translations?.installer?.install?.error?.details ||
+									'Error Details'}
+							</h4>
 							<p class="text-sm text-muted-foreground mt-1 font-mono break-all">
 								{error}
 							</p>
@@ -420,7 +578,10 @@
 
 				<!-- Troubleshooting Tips -->
 				<div class="p-4 bg-muted/20 border border-muted/30 rounded-lg">
-					<h4 class="font-medium mb-2">Troubleshooting Tips</h4>
+					<h4 class="font-medium mb-2">
+						{translations?.installer?.install?.error?.contactSupport ||
+							'Troubleshooting Tips'}
+					</h4>
 					<ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
 						<li>Ensure you have sufficient disk space (at least 8GB free)</li>
 						<li>Check that the selected disk is not currently mounted or in use</li>
@@ -429,7 +590,6 @@
 						<li>Try selecting a different disk or partition</li>
 					</ul>
 				</div>
-
 				<!-- Error Action Buttons -->
 				<div class="space-y-4">
 					<div class="flex gap-3 justify-center">
@@ -477,17 +637,20 @@
 									d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
 								/>
 							</svg>
-							Try Again
+							{translations?.installer?.install?.actions?.tryAgain || 'Try Again'}
 						</Button>
 						<Button variant="outline" onclick={handleReturnToRecovery}>
-							Return to Recovery
+							{translations?.installer?.install?.actions?.returnToRecovery ||
+								'Return to Recovery'}
 						</Button>
 					</div>
 				</div>
 
 				{#if !error}
 					<div class="pt-4 border-t">
-						<h4 class="font-medium mb-2">Installation Log</h4>
+						<h4 class="font-medium mb-2">
+							{translations?.installer?.install?.log?.title || 'Installation Log'}
+						</h4>
 						<div
 							class="p-3 bg-muted/50 rounded-lg max-h-48 overflow-y-auto font-mono text-xs"
 						>
@@ -495,7 +658,10 @@
 								<div class="text-muted-foreground mb-1">{logEntry}</div>
 							{/each}
 							{#if installationLog.length === 0}
-								<div class="text-muted-foreground">No log entries available.</div>
+								<div class="text-muted-foreground">
+									{translations?.installer?.install?.log?.empty ||
+										'No log entries available.'}
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -521,10 +687,13 @@
 							/>
 						</svg>
 					</div>
-					<h2 class="text-2xl font-bold text-primary">Installation Successful!</h2>
+					<h2 class="text-2xl font-bold text-primary">
+						{translations?.installer?.install?.success?.title ||
+							'Installation Successful!'}
+					</h2>
 					<p class="text-muted-foreground max-w-md mx-auto">
-						blossomOS has been installed successfully. You can now shutdown or restart
-						your computer to boot into your new operating system.
+						{translations?.installer?.install?.success?.message ||
+							'blossomOS has been installed successfully. You can now shutdown or restart your computer to boot into your new operating system.'}
 					</p>
 				</div>
 
@@ -540,15 +709,20 @@
 							for="restart-checkbox"
 							class="text-sm text-muted-foreground cursor-pointer"
 						>
-							Restart instead of shutdown
+							{translations?.installer?.install?.success?.restartOption ||
+								'Restart instead of shutdown'}
 						</label>
 					</div>
 					<div class="flex gap-3 justify-center">
 						<Button variant="outline" onclick={handleReturnToRecovery}>
-							Return to Recovery
+							{translations?.installer?.install?.actions?.returnToRecovery ||
+								'Return to Recovery'}
 						</Button>
 						<Button onclick={handlePowerAction}>
-							{shouldRestart ? 'Restart' : 'Shutdown'} Computer
+							{shouldRestart
+								? translations?.installer?.install?.actions?.restart || 'Restart'
+								: translations?.installer?.install?.actions?.shutdown || 'Shutdown'}
+							{translations?.installer?.install?.actions?.computer || 'Computer'}
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
@@ -578,7 +752,9 @@
 				<!-- Overall Progress -->
 				<div class="space-y-2">
 					<div class="flex justify-between items-center">
-						<h3 class="font-semibold">Installation Progress</h3>
+						<h3 class="font-semibold">
+							{translations?.installer?.install?.progress || 'Installation Progress'}
+						</h3>
 						<span class="text-sm text-muted-foreground">
 							{Math.round(overallProgress)}%
 						</span>
@@ -588,7 +764,9 @@
 
 				<!-- Presentation Slideshow -->
 				<div class="space-y-3">
-					<h4 class="font-medium text-center">Installing blossomOS</h4>
+					<h4 class="font-medium text-center">
+						{translations?.installer?.install?.title || 'Installing blossomOS'}
+					</h4>
 					<div class="flex justify-center">
 						<div class="relative w-full max-w-lg aspect-video">
 							<img
@@ -618,9 +796,12 @@
 					<div class="text-center">
 						<p class="text-sm text-muted-foreground">
 							{#if currentStepIndex < installSteps.length}
-								{installSteps[currentStepIndex]?.title || 'Preparing...'}
+								{installSteps[currentStepIndex]?.title ||
+									translations?.installer?.install?.preparing ||
+									'Preparing...'}
 							{:else}
-								Finalizing installation...
+								{translations?.installer?.install?.finalizing ||
+									'Finalizing installation...'}
 							{/if}
 						</p>
 					</div>
@@ -629,7 +810,10 @@
 				<!-- Installation Log Toggle -->
 				<div class="pt-4 border-t">
 					<Button variant="ghost" onclick={toggleLog} class="text-xs">
-						{showLog ? 'Hide' : 'Show'} Installation Log
+						{showLog
+							? translations?.installer?.install?.log?.hide || 'Hide'
+							: translations?.installer?.install?.log?.show || 'Show'}
+						{translations?.installer?.install?.log?.title || 'Installation Log'}
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"

@@ -5,6 +5,11 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import {
+		loadLanguageTranslations,
+		translations as translationsStore,
+		getCurrentLanguage,
+	} from '$lib/stores/i18n.js';
 
 	interface Disk {
 		name: string;
@@ -19,10 +24,43 @@
 		}>;
 	}
 
+	interface Translations {
+		installer?: {
+			selectDisk?: {
+				title?: string;
+				description?: string;
+				warning?: string;
+				availableDisks?: string;
+				selectDisk?: string;
+				diskInfo?: string;
+				partitions?: string;
+				noDisks?: string;
+				scanning?: string;
+				back?: string;
+				continue?: string;
+			};
+		};
+		buttons?: {
+			back?: string;
+			continue?: string;
+		};
+		common?: {
+			loading?: string;
+			warning?: string;
+		};
+	}
+
 	let disks: Disk[] = [];
 	let loading = false;
 	let selectedDiskName: string = '';
+	let translations: Translations | null = null;
+
 	$: selectedDisk = disks.find((disk) => disk.name === selectedDiskName) || null;
+
+	// Subscribe to translations store
+	translationsStore.subscribe((value) => {
+		translations = value;
+	});
 
 	async function scanDisks() {
 		loading = true;
@@ -36,7 +74,7 @@
 	}
 
 	function handleBack() {
-		goto('/installer/welcome');
+		goto('/installer/language');
 	}
 
 	function handleNext() {
@@ -60,8 +98,13 @@
 		}
 	}
 
-	onMount(() => {
-		scanDisks();
+	onMount(async () => {
+		// Load saved language and translations
+		const savedLanguage = getCurrentLanguage();
+		await loadLanguageTranslations(savedLanguage);
+
+		// Scan available disks
+		await scanDisks();
 	});
 </script>
 
@@ -83,13 +126,15 @@
 						d="M15.75 19.5 8.25 12l7.5-7.5"
 					/>
 				</svg>
-				Back
+				{translations?.buttons?.back || 'Back'}
 			</Button>
 			<div>
-				<Card.Title>Select Installation Disk</Card.Title>
+				<Card.Title>
+					{translations?.installer?.selectDisk?.title || 'Select Installation Disk'}
+				</Card.Title>
 				<Card.Description class="mt-2 text-muted-foreground">
-					Choose the disk where you want to install blossomOS. This will erase all data on
-					the selected disk.
+					{translations?.installer?.selectDisk?.description ||
+						'Choose the disk where you want to install blossomOS. This will erase all data on the selected disk.'}
 				</Card.Description>
 			</div>
 		</div>
@@ -115,11 +160,12 @@
 						/>
 					</svg>
 					<div>
-						<h4 class="font-medium text-destructive">Warning</h4>
+						<h4 class="font-medium text-destructive">
+							{translations?.common?.warning || 'Warning'}
+						</h4>
 						<p class="text-sm text-muted-foreground mt-1">
-							Installing blossomOS will completely erase all data on the selected
-							disk. Make sure you have backed up any important files before
-							proceeding.
+							{translations?.installer?.selectDisk?.warning ||
+								'Installing blossomOS will completely erase all data on the selected disk. Make sure you have backed up any important files before proceeding.'}
 						</p>
 					</div>
 				</div>
@@ -127,18 +173,23 @@
 
 			<!-- Disk List -->
 			<div>
-				<h3 class="font-semibold mb-4">Available Disks:</h3>
+				<h3 class="font-semibold mb-4">
+					{translations?.installer?.selectDisk?.availableDisks || 'Available Disks:'}
+				</h3>
 
 				{#if loading}
 					<div class="text-center py-8">
 						<div
 							class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"
 						></div>
-						<p class="text-muted-foreground mt-2">Scanning disks...</p>
+						<p class="text-muted-foreground mt-2">
+							{translations?.installer?.selectDisk?.scanning || 'Scanning disks...'}
+						</p>
 					</div>
 				{:else if disks.length === 0}
 					<div class="text-center py-8 text-muted-foreground">
-						No disks found. Please check your hardware connections.
+						{translations?.installer?.selectDisk?.noDisks ||
+							'No disks found. Please check your hardware connections.'}
 					</div>
 				{:else}
 					<RadioGroup.Root bind:value={selectedDiskName} class="space-y-2">
@@ -189,16 +240,18 @@
 
 			<!-- Navigation -->
 			<div class="flex justify-between pt-4">
-				<Button variant="outline" onclick={handleBack}>Back to Welcome</Button>
+				<Button variant="outline" onclick={handleBack}>
+					{translations?.buttons?.back || 'Back'}
+				</Button>
 				<Button onclick={handleNext} disabled={!selectedDisk} class="px-8">
-					Continue Installation
+					{translations?.buttons?.continue || 'Continue Installation'}
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke-width="1.5"
 						stroke="currentColor"
-						class="size-4 ml-2"
+						class="size-4"
 					>
 						<path
 							stroke-linecap="round"

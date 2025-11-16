@@ -1,0 +1,97 @@
+{
+  "welcome": {
+    "title": "Welcome to blossomOS! 🌸",
+    "description": "Pick your language and keyboard to get started with the installation."
+  },
+  "language": {
+    "title": "Language",
+    "description": "Choose your preferred language for the setup process.",
+    "label": "Language"
+  },
+  "keyboard": {
+    "title": "Keyboard Layout",
+    "description": "Pick your keyboard layout.",
+    "label": "Keyboard Layout"
+  },
+  "installer": {
+    "title": "Install blossomOS",
+    "selectDisk": {
+      "title": "Pick Your Install Disk",
+      "description": "Choose where you want blossomOS installed. We'll wipe everything on the disk you pick!",
+      "warning": "Installing blossomOS will completely wipe all data on your chosen disk. Make sure you've backed up anything important!",
+      "availableDisks": "Available Disks:",
+      "selectDisk": "Pick a disk",
+      "diskInfo": "Disk Info",
+      "partitions": "Partitions",
+      "noDisks": "No disks found. Check your hardware connections!",
+      "scanning": "Looking for disks...",
+      "back": "Back",
+      "continue": "Continue"
+    },
+    "install": {
+      "title": "Installing blossomOS",
+      "description": "Hang tight! We're installing blossomOS on your computer. This might take a few minutes.",
+      "progress": "Installation Progress",
+      "finalizing": "Finalizing installation...",
+      "preparing": "Preparing...",
+      "steps": {
+        "prepare": "Getting Ready",
+        "partition": "Setting Up Partitions", 
+        "format": "Formatting Your Disk",
+        "install": "Installing System Files",
+        "bootloader": "Setting Up Boot Loader",
+        "config": "Final Touches",
+        "descriptions": {
+          "prepare": "Setting things up for you...",
+          "partition": "Making space on your disk...",
+          "format": "Preparing your disk...",
+          "install": "Copying files to your computer...",
+          "bootloader": "Setting up boot options...",
+          "config": "Making final adjustments..."
+        }
+      },
+      "error": {
+        "title": "Installation Failed",
+        "description": "Something went wrong during the installation.",
+        "message": "An error happened while installing. Check the details below and give it another shot!",
+        "details": "Error Details:",
+        "contactSupport": "If this keeps happening, reach out to our support team with the error details."
+      },
+      "success": {
+        "title": "Installation Successful!",
+        "description": "blossomOS has been installed successfully on your computer!",
+        "message": "blossomOS is all set up! You can now shut down or restart your computer to boot into your shiny new OS.",
+        "restartOption": "Restart instead of shutdown"
+      },
+      "log": {
+        "title": "Installation Log",
+        "show": "Show",
+        "hide": "Hide",
+        "empty": "No log entries available.",
+        "toggle": "Installation Log",
+        "starting": "Starting blossomOS installation on"
+      },
+      "actions": {
+        "tryAgain": "Try Again",
+        "returnToRecovery": "Return to Recovery",
+        "shutdown": "Shutdown",
+        "restart": "Restart",
+        "computer": "Computer"
+      }
+    }
+  },
+  "buttons": {
+    "back": "Back",
+    "continue": "Continue",
+    "install": "Install",
+    "cancel": "Cancel",
+    "retry": "Try Again",
+    "finish": "Done"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Oops!",
+    "success": "Success!",
+    "warning": "Warning"
+  }
+}

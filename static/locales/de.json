@@ -1,0 +1,97 @@
+{
+  "welcome": {
+    "title": "Willkommen bei blossomOS!",
+    "description": "Wähl deine Sprache und Tastatur aus, um loszulegen."
+  },
+  "language": {
+    "title": "Sprache",
+    "description": "Wähle deine bevorzugte Sprache für die Installation.",
+    "label": "Sprache"
+  },
+  "keyboard": {
+    "title": "Tastaturbelegung",
+    "description": "Wähle deine Tastaturbelegung.",
+    "label": "Tastaturbelegung"
+  },
+  "installer": {
+    "title": "blossomOS installieren",
+    "selectDisk": {
+      "title": "Festplatte auswählen",
+      "description": "Wähle aus, wo blossomOS installiert werden soll. Wir löschen alles auf der gewählten Festplatte!",
+      "warning": "Die Installation von blossomOS löscht alle Daten auf der gewählten Festplatte. Stelle sicher, dass du wichtige Dateien gesichert hast!",
+      "availableDisks": "Verfügbare Festplatten:",
+      "selectDisk": "Festplatte auswählen",
+      "diskInfo": "Festplatten-Info",
+      "partitions": "Partitionen",
+      "noDisks": "Keine Festplatten gefunden. Prüfe deine Hardware-Verbindungen!",
+      "scanning": "Suche nach Festplatten...",
+      "back": "Zurück",
+      "continue": "Weiter"
+    },
+    "install": {
+      "title": "blossomOS wird installiert",
+      "description": "Halt durch! Wir installieren blossomOS auf deinem Computer. Das kann ein paar Minuten dauern.",
+      "progress": "Installationsfortschritt",
+      "finalizing": "Installation wird abgeschlossen...",
+      "preparing": "Vorbereitung...",
+      "steps": {
+        "prepare": "Vorbereitung",
+        "partition": "Partitionen einrichten",
+        "format": "Festplatte formatieren",
+        "install": "Systemdateien installieren",
+        "bootloader": "Bootloader einrichten",
+        "config": "Letzte Einstellungen",
+        "descriptions": {
+          "prepare": "Bereite alles für dich vor...",
+          "partition": "Schaffe Platz auf deiner Festplatte...",
+          "format": "Bereite deine Festplatte vor...",
+          "install": "Kopiere Dateien auf deinen Computer...",
+          "bootloader": "Richte Boot-Optionen ein...",
+          "config": "Mache letzte Anpassungen..."
+        }
+      },
+      "error": {
+        "title": "Installation fehlgeschlagen",
+        "description": "Etwas ist bei der Installation schiefgelaufen.",
+        "message": "Bei der Installation ist ein Fehler aufgetreten. Schau dir die Details unten an und versuch's nochmal!",
+        "details": "Fehlerdetails:",
+        "contactSupport": "Wenn das Problem weiterhin auftritt, wende dich mit den Fehlerdetails an unser Support-Team."
+      },
+      "success": {
+        "title": "Installation erfolgreich!",
+        "description": "blossomOS wurde erfolgreich auf deinem Computer installiert!",
+        "message": "blossomOS ist startklar! Du kannst jetzt deinen Computer herunterfahren oder neustarten, um in dein neues Betriebssystem zu booten.",
+        "restartOption": "Neustarten statt herunterfahren"
+      },
+      "log": {
+        "title": "Installationsprotokoll",
+        "show": "Anzeigen",
+        "hide": "Verstecken",
+        "empty": "Keine Protokolleinträge verfügbar.",
+        "toggle": "Installationsprotokoll",
+        "starting": "Starte blossomOS Installation auf"
+      },
+      "actions": {
+        "tryAgain": "Nochmal versuchen",
+        "returnToRecovery": "Zurück zur Recovery",
+        "shutdown": "Herunterfahren",
+        "restart": "Neustarten",
+        "computer": "Computer"
+      }
+    }
+  },
+  "buttons": {
+    "back": "Zurück",
+    "continue": "Weiter",
+    "install": "Installieren",
+    "cancel": "Abbrechen",
+    "retry": "Nochmal versuchen",
+    "finish": "Fertig"
+  },
+  "common": {
+    "loading": "Lädt...",
+    "error": "Ups!",
+    "success": "Geschafft!",
+    "warning": "Warnung"
+  }
+}

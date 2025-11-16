@@ -2,9 +2,16 @@
 	import { onMount } from 'svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import '../app.css';
+	import { loadLanguageTranslations, getCurrentLanguage } from '$lib/stores/i18n.js';
 
 	let ready: boolean = false;
-	onMount(() => (ready = true));
+
+	onMount(async () => {
+		// Load saved language and translations on app start
+		const savedLanguage = getCurrentLanguage();
+		await loadLanguageTranslations(savedLanguage);
+		ready = true;
+	});
 </script>
 
 <div class="dragbar"></div>
