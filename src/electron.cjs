@@ -761,6 +761,7 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`chmod +x /mnt/opt/blossomos-installer/start-postinstall.sh`);
 	await execPromiseWithSudo(`touch /mnt/home/${USER}/.postinstall`);
 	await execPromiseWithSudo(`${CHROOT} chown ${USER}:${USER} /home/${USER}/.postinstall`);
+	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /opt/blossomos-installer`);
 
 	// Install additional packages for electron support
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`);
