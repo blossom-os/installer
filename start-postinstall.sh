@@ -1,7 +1,13 @@
 #!/bin/bash
-panel_ids=$(qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.panels)
-for pid in $panel_ids; do
-    qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.removePanel $pid
-done
+qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+var ids = panelIds();
+for (var i = 0; i < ids.length; i++) {
+    var p = panelById(ids[i]);
+    // Panel komplett verstecken, wenn möglich:
+    p.height = 0;
+    // Oder zumindest autohide einstellen:
+    p.hiding = "autohide";
+}
+'
 cd /opt/blossomos-installer
 /home/$USER/.bun/bin/bun dev --postinstall
