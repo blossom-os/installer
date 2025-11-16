@@ -725,98 +725,39 @@ async function installBaseSystem() {
 }
 
 async function installMinimalKDEChroot() {
-  const CHROOT = "arch-chroot /mnt";
-  const USER = "liveuser";
+	const CHROOT = "arch-chroot /mnt";
+	const USER = "liveuser";
 
-  log('Starting minimal KDE installation in chroot...');
+	log('Starting minimal KDE installation in chroot...');
 
-  await execPromiseWithSudo(`
-    ${CHROOT} bash -c "
-      pacman -Sy --noconfirm --needed plasma-desktop konsole dolphin sddm kwin-x11 \
-	  plasma-nm plasma-pa bluedevil powerdevil systemsettings kde-gtk-config \ 
-	  breeze breeze-gtk oxygen-icons breeze-icon-theme hicolor-icon-theme \ 
-	  xdg-user-dirs-gtk xdg-desktop-portal-kde flatpak
-    "
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop konsole dolphin sddm kwin-x11 plasma-nm plasma-pa bluedevil powerdevil systemsettings kde-gtk-config breeze breeze-gtk oxygen-icons breeze-icon-theme hicolor-icon-theme xdg-user-dirs-gtk xdg-desktop-portal-kde flatpak"`);
 
-  await execPromiseWithSudo(`
-	${CHROOT} bash -c "
-	  useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}
-	"
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`);
 
-  await execPromiseWithSudo(`
-	${CHROOT} bash -c "
-	  passwd -d ${USER}
-	"
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "passwd -d ${USER}"`);
 
-  await execPromiseWithSudo(`
-	${CHROOT} bash -c "
-	  sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
-	"
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`);
 
-  await execPromiseWithSudo(`
-	${CHROOT} bash -c "
-	  sudo -u ${USER} bash -c 'curl -fsSL https://bun.sh/install | bash'
-	"
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "sudo -u ${USER} bash -c 'curl -fsSL https://bun.sh/install | bash'"`);
 
-  log('Configuring SDDM autologin...');
+	log('Configuring SDDM autologin...');
 
-  await execPromiseWithSudo(`
-    ${CHROOT} bash -c "
-      mkdir -p /etc/sddm.conf.d
-    "
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/sddm.conf.d"`);
 
-  await execPromiseWithSudo(`
-    ${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF
-[Autologin]
-User=${USER}
-Session=custom.desktop
-EOF"
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=custom.desktop\nEOF"`);
 
-  await execPromiseWithSudo(`
-    ${CHROOT} bash -c "cat >/usr/share/xsessions/custom.desktop <<EOF
-[Desktop Entry]
-Name=Custom
-Exec=/usr/local/bin/start-custom
-Type=Application
-EOF"
-  `);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/usr/share/xsessions/custom.desktop <<EOF\n[Desktop Entry]\nName=Custom\nExec=/usr/local/bin/start-custom\nType=Application\nEOF"`);
 
-  await execPromiseWithSudo(`
-    ${CHROOT} bash -c "cat >/usr/local/bin/start-custom <<'EOF'
-#!/bin/bash
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/usr/local/bin/start-custom <<'EOF'\n#!/bin/bash\n\n# Start KWin\nkwin_x11 --replace &\n\nsleep 2\n\n# Run the Blossomos installer\ncd /opt/blossomos-installer/ || exit 1\n/home/liveuser/.bun/bin/bun dev --postinstall\nEOF"`);
 
-# Start KWin
-kwin_x11 --replace &
+	await execPromiseWithSudo(`${CHROOT} chmod +x /usr/local/bin/start-custom`);
 
-sleep 2
+	await execPromiseWithSudo(`${CHROOT} systemctl enable sddm.service`);
 
-# Run the Blossomos installer
-cd /opt/blossomos-installer/ || exit 1
-/home/liveuser/.bun/bin/bun dev --postinstall
-EOF"
-  `);
+	log("Copying installer files...");
+	await execPromiseWithSudo(`cp -r /opt/blossomos-installer /mnt/opt/blossomos-installer`);
 
-  await execPromiseWithSudo(`
-    ${CHROOT} chmod +x /usr/local/bin/start-custom
-  `);
-
-  await execPromiseWithSudo(`
-    ${CHROOT} systemctl enable sddm.service
-  `);
-
-  log("Copying installer files...");
-  await execPromiseWithSudo(`
-	cp -r /opt/blossomos-installer /mnt/opt/blossomos-installer
-  `);
-
-  log('Minimal KDE installation in chroot completed.');
+	log('Minimal KDE installation in chroot completed.');
 }
 
 async function configureSystem() {
