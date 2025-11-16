@@ -750,11 +750,7 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /home/${USER}/.config/autostart"`);
 
 	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/home/${USER}/.config/autostart/postinstall.desktop <<EOF\n[Desktop Entry]\nName=BlossomOS Post Install\nExec=/opt/blossomos-installer/start-postinstall.sh\nType=Application\nX-KDE-autostart-after=panel\nHidden=false\nNoDisplay=false\nEOF"`);
-
-	// Create the postinstall script
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/opt/blossomos-installer/start-postinstall.sh <<'EOF'\n#!/bin/bash\n\n# Remove the panel\nkwriteconfig5 --file /home/${USER}/.config/plasma-org.kde.plasma.desktop-appletsrc --group Containments --key 1 --delete\nkwriteconfig5 --file /home/${USER}/.config/plasmarc --group PlasmaViews --group Panel\\ 1 --key panelVisibility 1\n\n# Remove the autostart entry so this only runs once\nrm -f /home/${USER}/.config/autostart/postinstall.desktop\n\n# Start the installer\ncd /opt/blossomos-installer\n/home/${USER}/.bun/bin/bun dev --postinstall\nEOF"`);
-
-	await execPromiseWithSudo(`${CHROOT} chmod +x /opt/blossomos-installer/start-postinstall.sh`);
+	await execPromiseWithSudo(`chmod +x /mnt/opt/blossomos-installer/start-postinstall.sh`);
 
 	// Set proper ownership for user files
 	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /home/${USER}`);
