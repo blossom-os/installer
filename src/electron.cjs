@@ -485,6 +485,55 @@ ipcMain.handle('check-boot-mode', async (event) => {
 	});
 });
 
+// Detect NVIDIA graphics card
+ipcMain.handle('detect-nvidia', async (event) => {
+	return new Promise((resolve) => {
+		exec('lspci | grep -i nvidia', (error, stdout, stderr) => {
+			if (error) {
+				log('NVIDIA detection: No NVIDIA card found or lspci failed');
+				resolve({ hasNvidia: false, error: error.message });
+				return;
+			}
+
+			const gpuLines = stdout.trim().split('\n').filter(line => line.trim());
+			if (gpuLines.length === 0) {
+				log('NVIDIA detection: No NVIDIA cards in lspci output');
+				resolve({ hasNvidia: false });
+				return;
+			}
+
+			log('NVIDIA detection: Found NVIDIA hardware');
+			
+			// Parse GPU information
+			const gpuInfo = gpuLines.map(line => {
+				// Extract GPU name from lspci output
+				const match = line.match(/NVIDIA.*?: (.+)/);
+				return {
+					name: match ? match[1].trim() : 'NVIDIA Graphics Card',
+					raw: line.trim()
+				};
+			});
+
+			// Try to get additional info with nvidia-smi if available
+			exec('nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits', (smiError, smiOut) => {
+				if (!smiError && smiOut.trim()) {
+					const smiLines = smiOut.trim().split('\n');
+					smiLines.forEach((smiLine, index) => {
+						if (gpuInfo[index]) {
+							const [name, memory] = smiLine.split(',').map(s => s.trim());
+							if (name && name !== 'N/A') gpuInfo[index].name = name;
+							if (memory && memory !== 'N/A') gpuInfo[index].memory = `${memory} MB`;
+						}
+					});
+				}
+				
+				log('NVIDIA detection result:', { hasNvidia: true, gpuInfo });
+				resolve({ hasNvidia: true, gpuInfo });
+			});
+		});
+	});
+});
+
 // Install blossomOS
 ipcMain.handle('install-system', async (event, diskPath) => {
 	return new Promise(async (resolve, reject) => {
@@ -906,6 +955,30 @@ EOF`);
 
 	// Enable essential services
 	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable NetworkManager`);
+
+	// Install NVIDIA drivers if detected
+	try {
+		// Check if NVIDIA was detected during installation
+		const nvidiaDetected = await new Promise((resolve) => {
+			exec('lspci | grep -i nvidia', (error, stdout) => {
+				resolve(!error && stdout.trim().length > 0);
+			});
+		});
+
+		if (nvidiaDetected) {
+			log('NVIDIA card detected, installing NVIDIA drivers...');
+			progressCallback({ step: 'nvidia-install', progress: 85 });
+			
+			// Install NVIDIA packages
+			await execPromiseWithSudo(`arch-chroot /mnt pacman -S --noconfirm nvidia nvidia-utils`);
+			log('NVIDIA drivers installed successfully');
+		} else {
+			log('No NVIDIA card detected, skipping NVIDIA driver installation');
+		}
+	} catch (error) {
+		log('Error checking/installing NVIDIA drivers:', error.message);
+		// Don't fail the installation if NVIDIA installation fails
+	}
 
 	// Initialize pacman keyring
 	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --init`);

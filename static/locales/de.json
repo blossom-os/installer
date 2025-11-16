@@ -78,6 +78,23 @@
         "restart": "Neustarten",
         "computer": "Computer"
       }
+    },
+    "nvidia": {
+      "title": "Grafikkarten-Erkennung",
+      "description": "Suche nach NVIDIA-Grafikkarten, um dein System zu optimieren.",
+      "detected": "NVIDIA-Grafikkarte erkannt!",
+      "message": "Wir haben eine NVIDIA-Grafikkarte in deinem System gefunden. Wir installieren automatisch die NVIDIA-Treiber für die beste Performance.",
+      "support": "Das bedeutet:",
+      "optimization": "Automatische NVIDIA-Treiber-Installation",
+      "noDetected": "Keine NVIDIA-Grafikkarte erkannt",
+      "standardInstall": "Wir machen mit der Standard-Installation weiter.",
+      "detectedCards": "Erkannte Grafikkarten:",
+      "memory": "Speicher:",
+      "benefits": {
+        "performance": "Bessere Gaming- und Grafik-Performance",
+        "acceleration": "Hardware-Beschleunigung",
+        "development": "CUDA- und OpenCL-Support für Entwicklung"
+      }
     }
   },
   "buttons": {

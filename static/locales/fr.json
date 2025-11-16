@@ -78,6 +78,23 @@
         "restart": "Redémarrer",
         "computer": "Ordinateur"
       }
+    },
+    "nvidia": {
+      "title": "Détection de carte graphique",
+      "description": "Recherche de matériel graphique NVIDIA pour optimiser ton système.",
+      "detected": "Carte graphique NVIDIA détectée !",
+      "message": "On a trouvé une carte graphique NVIDIA dans ton système. On va automatiquement installer les pilotes NVIDIA pour la meilleure expérience.",
+      "support": "Ce que ça veut dire :",
+      "optimization": "Installation automatique des pilotes NVIDIA",
+      "noDetected": "Aucune carte graphique NVIDIA détectée",
+      "standardInstall": "On va continuer avec l'installation standard.",
+      "detectedCards": "Cartes graphiques détectées :",
+      "memory": "Mémoire :",
+      "benefits": {
+        "performance": "Meilleures performances pour les jeux et graphiques",
+        "acceleration": "Support de l'accélération matérielle",
+        "development": "Support CUDA et OpenCL pour le développement"
+      }
     }
   },
   "buttons": {

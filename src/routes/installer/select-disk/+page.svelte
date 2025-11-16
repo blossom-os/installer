@@ -74,7 +74,7 @@
 	}
 
 	function handleBack() {
-		goto('/installer/language');
+		goto('/installer/nvidia');
 	}
 
 	function handleNext() {

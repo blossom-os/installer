@@ -102,10 +102,10 @@
 			console.log('Language saved:', selectedLanguage);
 			console.log('Keyboard saved:', selectedKeyboard);
 
-			goto('/installer/select-disk');
+			goto('/installer/nvidia');
 		} catch (error) {
 			console.error('Error saving settings:', error);
-			goto('/installer/select-disk');
+			goto('/installer/nvidia');
 		}
 	}
 

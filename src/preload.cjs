@@ -44,6 +44,9 @@ contextBridge.exposeInMainWorld('electron', {
 	checkBootMode: () => {
 		return ipcRenderer.invoke('check-boot-mode');
 	},
+	detectNvidia: () => {
+		return ipcRenderer.invoke('detect-nvidia');
+	},
 	installSystem: (diskPath) => {
 		return ipcRenderer.invoke('install-system', diskPath);
 	},

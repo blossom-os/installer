@@ -78,6 +78,23 @@
         "restart": "Reiniciar",
         "computer": "Computadora"
       }
+    },
+    "nvidia": {
+      "title": "Detección de Tarjeta Gráfica",
+      "description": "Buscando hardware gráfico NVIDIA para optimizar tu sistema.",
+      "detected": "¡Tarjeta Gráfica NVIDIA Detectada!",
+      "message": "Encontramos una tarjeta gráfica NVIDIA en tu sistema. Instalaremos automáticamente los controladores NVIDIA para la mejor experiencia.",
+      "support": "Esto significa:",
+      "optimization": "Instalación automática de controladores NVIDIA",
+      "noDetected": "No se detectó tarjeta gráfica NVIDIA",
+      "standardInstall": "Continuaremos con la instalación estándar.",
+      "detectedCards": "Tarjetas gráficas detectadas:",
+      "memory": "Memoria:",
+      "benefits": {
+        "performance": "Mejor rendimiento para juegos y gráficos",
+        "acceleration": "Soporte de aceleración por hardware",
+        "development": "Soporte CUDA y OpenCL para desarrollo"
+      }
     }
   },
   "buttons": {

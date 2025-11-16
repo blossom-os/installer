@@ -78,6 +78,23 @@
         "restart": "Restart",
         "computer": "Computer"
       }
+    },
+    "nvidia": {
+      "title": "Graphics Card Detection",
+      "description": "Checking for NVIDIA graphics hardware to optimize your setup.",
+      "detected": "NVIDIA Graphics Detected!",
+      "message": "We found an NVIDIA graphics card in your system. We'll automatically install the NVIDIA drivers for the best experience.",
+      "support": "What this means:",
+      "optimization": "Automatic NVIDIA driver installation",
+      "noDetected": "No NVIDIA Graphics Detected",
+      "standardInstall": "We'll continue with the standard installation process.",
+      "detectedCards": "Detected Graphics Cards:",
+      "memory": "Memory:",
+      "benefits": {
+        "performance": "Better gaming and graphics performance",
+        "acceleration": "Hardware acceleration support",
+        "development": "CUDA and OpenCL support for development"
+      }
     }
   },
   "buttons": {
