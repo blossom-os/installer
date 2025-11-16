@@ -730,7 +730,7 @@ async function installMinimalKDEChroot() {
 
 	log('Starting minimal KDE installation in chroot...');
 
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop konsole dolphin sddm kwin-x11 plasma-nm plasma-pa bluedevil powerdevil systemsettings kde-gtk-config breeze breeze-gtk oxygen-icons breeze-icon-theme hicolor-icon-theme xdg-user-dirs-gtk xdg-desktop-portal-kde flatpak"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop sddm flatpak"`);
 
 	await execPromiseWithSudo(`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`);
 
@@ -744,13 +744,20 @@ async function installMinimalKDEChroot() {
 
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/sddm.conf.d"`);
 
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=custom.desktop\nEOF"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=plasma.desktop\nEOF"`);
 
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/usr/share/xsessions/custom.desktop <<EOF\n[Desktop Entry]\nName=Custom\nExec=/usr/local/bin/start-custom\nType=Application\nEOF"`);
+	// Create autostart directory and postinstall desktop entry
+	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /home/${USER}/.config/autostart"`);
 
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/usr/local/bin/start-custom <<'EOF'\n#!/bin/bash\n\n# Start KWin\nkwin_x11 --replace &\n\nsleep 2\n\n# Run the Blossomos installer\ncd /opt/blossomos-installer/ || exit 1\n/home/liveuser/.bun/bin/bun dev --postinstall\nEOF"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/home/${USER}/.config/autostart/postinstall.desktop <<EOF\n[Desktop Entry]\nName=BlossomOS Post Install\nExec=/opt/blossomos-installer/start-postinstall.sh\nType=Application\nX-KDE-autostart-after=panel\nHidden=false\nNoDisplay=false\nEOF"`);
 
-	await execPromiseWithSudo(`${CHROOT} chmod +x /usr/local/bin/start-custom`);
+	// Create the postinstall script
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/opt/blossomos-installer/start-postinstall.sh <<'EOF'\n#!/bin/bash\n\n# Remove the panel\nkwriteconfig5 --file /home/${USER}/.config/plasma-org.kde.plasma.desktop-appletsrc --group Containments --key 1 --delete\nkwriteconfig5 --file /home/${USER}/.config/plasmarc --group PlasmaViews --group Panel\\ 1 --key panelVisibility 1\n\n# Remove the autostart entry so this only runs once\nrm -f /home/${USER}/.config/autostart/postinstall.desktop\n\n# Start the installer\ncd /opt/blossomos-installer\n/home/${USER}/.bun/bin/bun dev --postinstall\nEOF"`);
+
+	await execPromiseWithSudo(`${CHROOT} chmod +x /opt/blossomos-installer/start-postinstall.sh`);
+
+	// Set proper ownership for user files
+	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /home/${USER}`);
 
 	await execPromiseWithSudo(`${CHROOT} systemctl enable sddm.service`);
 
