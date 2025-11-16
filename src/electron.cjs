@@ -106,8 +106,8 @@ function createMainWindow() {
 		mainWindow = null;
 	});
 
-	// Check for command line arguments
-	const isPostInstall = process.argv.includes('--postinstall');
+	// Check for postinstall file
+	const isPostInstall = fs.existsSync('/home/liveuser/.postinstall');
 	
 	if (dev) {
 		loadVite(port);
@@ -138,7 +138,7 @@ app.on('activate', () => {
 
 // IPC handler to check if running in postinstall mode
 ipcMain.handle('check-postinstall-mode', async () => {
-	return process.argv.includes('--postinstall');
+	return fs.existsSync('/home/liveuser/.postinstall');
 });
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
@@ -759,6 +759,11 @@ async function installMinimalKDEChroot() {
 	log("Copying installer files...");
 	await execPromiseWithSudo(`cp -r /opt/blossomos-installer /mnt/opt/blossomos-installer`);
 	await execPromiseWithSudo(`chmod +x /mnt/opt/blossomos-installer/start-postinstall.sh`);
+	await execPromiseWithSudo(`touch /mnt/home/${USER}/.postinstall`);
+	await execPromiseWithSudo(`${CHROOT} chown ${USER}:${USER} /home/${USER}/.postinstall`);
+
+	// Install additional packages for electron support
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`);
 
 	log('Minimal KDE installation in chroot completed.');
 }
