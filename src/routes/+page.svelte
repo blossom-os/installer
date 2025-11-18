@@ -20,7 +20,7 @@
 
 	function handleGparted() {
 		if (window.electron) {
-			window.electron.runCommand('gparted');
+			window.electron.runCommand('pkexec gparted');
 		} else {
 			console.log('Electron API not available');
 		}
@@ -28,7 +28,7 @@
 
 	function handleTimeshift() {
 		if (window.electron) {
-			window.electron.runCommand('timeshift-gtk');
+			window.electron.runCommand('pkexec timeshift-gtk');
 		} else {
 			console.log('Electron API not available');
 		}
