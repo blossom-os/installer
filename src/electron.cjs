@@ -947,6 +947,9 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} systemctl enable pipewire.service`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
 
+	// Install fonts
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`);
+
 	// Install essential KDE applications
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle"`);
 
