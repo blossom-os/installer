@@ -23,6 +23,12 @@
 			} catch (error) {
 				console.error('Failed to check postinstall mode or enter fullscreen:', error);
 			}
+			
+			try {
+				await window.electron.runCommand('amixer set Master 62% unmute');
+			} catch (error) {
+				console.error('Failed to set volume:', error);
+			}
 		}
 	});
 

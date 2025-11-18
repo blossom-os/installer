@@ -943,7 +943,7 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`);
 
 	// Install Pipewire and Bluetooth
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber bluez bluez-utils gnome-bluetooth"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable pipewire.service`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
 

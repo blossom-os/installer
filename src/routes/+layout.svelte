@@ -4,8 +4,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import '../app.css';
 	import { loadLanguageTranslations, getCurrentLanguage } from '$lib/stores/i18n.js';
-	import { goto } from '$app/navigation';
-
+	
 	let ready: boolean = false;
 
 	onMount(async () => {
