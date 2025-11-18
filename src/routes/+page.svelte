@@ -28,7 +28,7 @@
 
 	function handleTimeshift() {
 		if (window.electron) {
-			window.electron.runCommand('pkexec timeshift-gtk');
+			window.electron.runCommand('timeshift-launcher');
 		} else {
 			console.log('Electron API not available');
 		}
