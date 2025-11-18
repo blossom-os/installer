@@ -943,7 +943,7 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`);
 
 	// Install Pipewire and Bluetooth
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable pipewire.service`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
 
@@ -975,7 +975,7 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC"`);
 
 	// Install Timeshift
-	await execPromiseWithSudo(`${CHROOT} bash -c "yay -S --noconfirm timeshift"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed timeshift"`);
 	
 	// Set up Timeshift to use BTRFS snapshots and create initial snapshot
 	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --update --include-home yes --btrfs-device ${partitions.root} --snapshot-device ${partitions.root}"`);
