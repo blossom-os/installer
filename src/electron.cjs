@@ -906,32 +906,28 @@ async function installMinimalKDEChroot(rootPartition) {
 
 	log('Starting minimal KDE installation in chroot...');
 
+	// Minimal KDE packages
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop sddm flatpak unzip"`);
 
+	// User setup
 	await execPromiseWithSudo(`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`);
-
 	await execPromiseWithSudo(`${CHROOT} bash -c "passwd -d ${USER}"`);
-
 	await execPromiseWithSudo(`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`);
 
+	// Bun installation
 	await execPromiseWithSudo(`${CHROOT} bash -c "sudo -u ${USER} bash -c 'curl -fsSL https://bun.sh/install | bash'"`);
 
 	log('Configuring SDDM autologin...');
-
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/sddm.conf.d"`);
-
 	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=plasma.desktop\nEOF"`);
 
-	// Create autostart directory and postinstall desktop entry
+	// Autostart desktop entry
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /home/${USER}/.config/autostart"`);
-
 	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/home/${USER}/.config/autostart/postinstall.desktop <<EOF\n[Desktop Entry]\nName=BlossomOS Post Install\nExec=/opt/blossomos-installer/start-postinstall.sh\nType=Application\nX-KDE-autostart-after=panel\nHidden=false\nNoDisplay=false\nEOF"`);
-
-	// Set proper ownership for user files
 	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /home/${USER}`);
-
 	await execPromiseWithSudo(`${CHROOT} systemctl enable sddm.service`);
 
+	// Copy installer files
 	log("Copying installer files...");
 	await execPromiseWithSudo(`cp -r /opt/blossomos-installer /mnt/opt/blossomos-installer`);
 	await execPromiseWithSudo(`chmod +x /mnt/opt/blossomos-installer/start-postinstall.sh`);
@@ -939,57 +935,41 @@ async function installMinimalKDEChroot(rootPartition) {
 	await execPromiseWithSudo(`${CHROOT} chown ${USER}:${USER} /home/${USER}/.postinstall`);
 	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /opt/blossomos-installer`);
 
-	// Install additional packages for electron support
+	// Essential packages
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`);
-
-	// Install Pipewire and Bluetooth
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
-
-	// Install cups, cups-browsed and avahi for printing and network discovery
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed cups cups-browsed avahi nss-mdns hplip"`);
-
-	await execPromiseWithSudo(`${CHROOT} systemctl enable cups`);
-	await execPromiseWithSudo(`${CHROOT} systemctl enable avahi-daemon`);
-	await execPromiseWithSudo(`${CHROOT} systemctl enable cups-browsed`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "sed -i '/^hosts:/ s/mymachines resolve \\[!UNAVAIL=return\\] files myhostname dns/mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns/' /etc/nsswitch.conf"`); // This fixes printer discovery
-
-	// Install fonts
+	await execPromiseWithSudo(`${CHROOT} systemctl enable cups cups-browsed avahi-daemon`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "sed -i '/^hosts:/ s/mymachines resolve \\[!UNAVAIL=return\\] files myhostname dns/mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns/' /etc/nsswitch.conf"`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`);
-
-	// Install essential KDE applications
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle"`);
 
-	// Enable Chaotic-AUR repository
+	// Chaotic-AUR setup
 	log('Enabling Chaotic-AUR repository...');
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com"`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman-key --lsign-key 3056513887B78AEB"`);
-
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'"`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"`);
-
-	// Add Chaotic-AUR to pacman.conf
 	await execPromiseWithSudo(`${CHROOT} bash -c "echo -e '\\n[chaotic-aur]\\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf"`);
-
-	// Update package databases
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Syu --noconfirm"`);
-
-	// Install yay and Bazaar
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar"`);
 
-	// Install Firefox, LibreOffice and VLC Flatpaks
+	// Flatpaks
 	await execPromiseWithSudo(`${CHROOT} bash -c "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC"`);
 
-	// Install Timeshift
+	// Timeshift setup with dynamic UUIDs
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed timeshift"`);
-	
-	// Set up Timeshift to use BTRFS snapshots and create initial snapshot
-	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --update --include-home yes --btrfs-device ${rootPartition} --snapshot-device ${rootPartition}"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`);
-	// Configure Timeshift settings
+
+	// Dynamically fetch UUIDs
+	const backupUUID = (await execPromiseWithSudo(`blkid -s UUID -o value ${rootPartition}`)).trim();
+	log(`Detected UUID for Timeshift: ${backupUUID}`);
+
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/timeshift"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat > /etc/timeshift/timeshift.json << 'EOF'\n{\n\t\\\"backup_device_uuid\\\" : \\\"226af845-a138-426a-bef7-db56a3d2a3b7\\\",\n\t\\\"parent_device_uuid\\\" : \\\"0d05c65a-ea54-46d3-80f4-abbac401c650\\\",\n\t\\\"do_first_run\\\" : \\\"false\\\",\n\t\\\"btrfs_mode\\\" : \\\"true\\\",\n\t\\\"include_btrfs_home_for_backup\\\" : \\\"true\\\",\n\t\\\"include_btrfs_home_for_restore\\\" : \\\"false\\\",\n\t\\\"stop_cron_emails\\\" : \\\"true\\\",\n\t\\\"schedule_monthly\\\" : \\\"false\\\",\n\t\\\"schedule_weekly\\\" : \\\"false\\\",\n\t\\\"schedule_daily\\\" : \\\"true\\\",\n\t\\\"schedule_hourly\\\" : \\\"true\\\",\n\t\\\"schedule_boot\\\" : \\\"true\\\",\n\t\\\"count_monthly\\\" : \\\"2\\\",\n\t\\\"count_weekly\\\" : \\\"3\\\",\n\t\\\"count_daily\\\" : \\\"5\\\",\n\t\\\"count_hourly\\\" : \\\"6\\\",\n\t\\\"count_boot\\\" : \\\"5\\\",\n\t\\\"date_format\\\" : \\\"%Y-%m-%d %H:%M:%S\\\",\n\t\\\"exclude\\\" : [],\n\t\\\"exclude-apps\\\" : []\n}\nEOF"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "echo '{\\\"backup_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"parent_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"do_first_run\\\" : \\\"false\\\", \\\"btrfs_mode\\\" : \\\"true\\\", \\\"include_btrfs_home_for_backup\\\" : \\\"true\\\", \\\"include_btrfs_home_for_restore\\\" : \\\"false\\\", \\\"stop_cron_emails\\\" : \\\"true\\\", \\\"schedule_monthly\\\" : \\\"false\\\", \\\"schedule_weekly\\\" : \\\"false\\\", \\\"schedule_daily\\\" : \\\"true\\\", \\\"schedule_hourly\\\" : \\\"true\\\", \\\"schedule_boot\\\" : \\\"true\\\", \\\"count_monthly\\\" : \\\"2\\\", \\\"count_weekly\\\" : \\\"3\\\", \\\"count_daily\\\" : \\\"5\\\", \\\"count_hourly\\\" : \\\"6\\\", \\\"count_boot\\\" : \\\"5\\\", \\\"date_format\\\" : \\\"%Y-%m-%d %H:%M:%S\\\", \\\"exclude\\\" : [], \\\"exclude-apps\\\" : [] }' > /etc/timeshift/timeshift.json"`);
+
+	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`);
 
 	log('Minimal KDE installation in chroot completed.');
 }
