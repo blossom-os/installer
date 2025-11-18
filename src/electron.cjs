@@ -963,7 +963,11 @@ async function installMinimalKDEChroot(rootPartition) {
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed timeshift"`);
 
 	// Dynamically fetch UUIDs
-	const backupUUID = (await execPromiseWithSudo(`blkid -s UUID -o value ${rootPartition}`)).trim();
+	const backupUUID = await new Promise((resolve) => {
+		exec(`blkid -s UUID -o value ${rootPartition}`, (error, stdout) => {
+			resolve(!error && stdout.trim().length > 0 ? stdout.trim() : '');
+		});
+	});
 	log(`Detected UUID for Timeshift: ${backupUUID}`);
 
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/timeshift"`);
