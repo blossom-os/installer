@@ -944,7 +944,6 @@ async function installMinimalKDEChroot() {
 
 	// Install Pipewire and Bluetooth
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`);
-	await execPromiseWithSudo(`${CHROOT} systemctl enable pipewire.service`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
 
 	// Install fonts
