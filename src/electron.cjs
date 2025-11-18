@@ -979,30 +979,7 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`);
 	// Configure Timeshift settings
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/timeshift"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat > /etc/timeshift/timeshift.json << 'EOF'
-	{
-		\"backup_device_uuid\" : \"226af845-a138-426a-bef7-db56a3d2a3b7\",
-		\"parent_device_uuid\" : \"0d05c65a-ea54-46d3-80f4-abbac401c650\",
-		\"do_first_run\" : \"false\",
-		\"btrfs_mode\" : \"true\",
-		\"include_btrfs_home_for_backup\" : \"true\",
-		\"include_btrfs_home_for_restore\" : \"false\",
-		\"stop_cron_emails\" : \"true\",
-		\"schedule_monthly\" : \"false\",
-		\"schedule_weekly\" : \"false\",
-		\"schedule_daily\" : \"true\",
-		\"schedule_hourly\" : \"true\",
-		\"schedule_boot\" : \"true\",
-		\"count_monthly\" : \"2\",
-		\"count_weekly\" : \"3\",
-		\"count_daily\" : \"5\",
-		\"count_hourly\" : \"6\",
-		\"count_boot\" : \"5\",
-		\"date_format\" : \"%Y-%m-%d %H:%M:%S\",
-		\"exclude\" : [],
-		\"exclude-apps\" : []
-	}
-	EOF"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat > /etc/timeshift/timeshift.json << 'EOF'\n{\n\t\\\"backup_device_uuid\\\" : \\\"226af845-a138-426a-bef7-db56a3d2a3b7\\\",\n\t\\\"parent_device_uuid\\\" : \\\"0d05c65a-ea54-46d3-80f4-abbac401c650\\\",\n\t\\\"do_first_run\\\" : \\\"false\\\",\n\t\\\"btrfs_mode\\\" : \\\"true\\\",\n\t\\\"include_btrfs_home_for_backup\\\" : \\\"true\\\",\n\t\\\"include_btrfs_home_for_restore\\\" : \\\"false\\\",\n\t\\\"stop_cron_emails\\\" : \\\"true\\\",\n\t\\\"schedule_monthly\\\" : \\\"false\\\",\n\t\\\"schedule_weekly\\\" : \\\"false\\\",\n\t\\\"schedule_daily\\\" : \\\"true\\\",\n\t\\\"schedule_hourly\\\" : \\\"true\\\",\n\t\\\"schedule_boot\\\" : \\\"true\\\",\n\t\\\"count_monthly\\\" : \\\"2\\\",\n\t\\\"count_weekly\\\" : \\\"3\\\",\n\t\\\"count_daily\\\" : \\\"5\\\",\n\t\\\"count_hourly\\\" : \\\"6\\\",\n\t\\\"count_boot\\\" : \\\"5\\\",\n\t\\\"date_format\\\" : \\\"%Y-%m-%d %H:%M:%S\\\",\n\t\\\"exclude\\\" : [],\n\t\\\"exclude-apps\\\" : []\n}\nEOF"`);
 
 	log('Minimal KDE installation in chroot completed.');
 }
