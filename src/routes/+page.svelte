@@ -10,7 +10,7 @@
 			try {
 				const isPostinstall = await window.electron.checkPostinstallMode();
 				if (isPostinstall) {
-					goto('/postinstall');
+					goto('/intro');
 				}
 			} catch (error) {
 				console.error('Failed to check postinstall mode:', error);

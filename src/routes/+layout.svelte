@@ -15,15 +15,20 @@
 	});
 
 	// Check if current route should use card layout (exclude postinstall)
-	$: isPostinstall = $page.route?.id?.startsWith('/postinstall');
+	$: pageRoute = $page.route?.id || '';
 </script>
 
 <div class="dragbar"></div>
 
 {#if ready}
-	{#if isPostinstall}
+	{#if pageRoute?.startsWith('/postinstall')}
 		<!-- Fullscreen layout for postinstall -->
 		 <audio autoplay src="/intro_audio.mp3"></audio>
+		<div class="min-h-screen bg-background">
+			<slot />
+		</div>
+	{:else if pageRoute === '/intro'}
+		<!-- Fullscreen layout for intro -->
 		<div class="min-h-screen bg-background">
 			<slot />
 		</div>
