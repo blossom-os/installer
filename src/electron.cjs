@@ -946,6 +946,14 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
 
+	// Install cups, cups-browsed and avahi for printing and network discovery
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed cups cups-browsed avahi nss-mdns hplip"`);
+
+	await execPromiseWithSudo(`${CHROOT} systemctl enable cups`);
+	await execPromiseWithSudo(`${CHROOT} systemctl enable avahi-daemon`);
+	await execPromiseWithSudo(`${CHROOT} systemctl enable cups-browsed`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "sed -i '/^hosts:/ s/mymachines resolve \\[!UNAVAIL=return\\] files myhostname dns/mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns/' /etc/nsswitch.conf"`); // This fixes printer discovery
+
 	// Install fonts
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`);
 
