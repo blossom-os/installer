@@ -619,7 +619,7 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			// Step 4: Install base system
 			event.sender.send('installation-progress', { step: 'install-base', progress: 50 });
 			log('Installing base system...');
-			await installBaseSystem();
+			await installBaseSystem(installPartition.root);
 
 			// Step 5: Configure system
 			event.sender.send('installation-progress', { step: 'configure', progress: 70 });
@@ -879,7 +879,7 @@ async function mountPartitions(partitions, isUEFI) {
 	}
 }
 
-async function installBaseSystem() {
+async function installBaseSystem(rootPartition) {
 	// Update package databases
 	await execPromiseWithSudo(`pacman -Sy`);
 
@@ -897,10 +897,10 @@ async function installBaseSystem() {
 	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --refresh-keys`);
 
 	// Install minimal KDE in chroot
-	await installMinimalKDEChroot();
+	await installMinimalKDEChroot(rootPartition);
 }
 
-async function installMinimalKDEChroot() {
+async function installMinimalKDEChroot(rootPartition) {
 	const CHROOT = "arch-chroot /mnt";
 	const USER = "liveuser";
 
@@ -985,7 +985,7 @@ async function installMinimalKDEChroot() {
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed timeshift"`);
 	
 	// Set up Timeshift to use BTRFS snapshots and create initial snapshot
-	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --update --include-home yes --btrfs-device ${partitions.root} --snapshot-device ${partitions.root}"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --update --include-home yes --btrfs-device ${rootPartition} --snapshot-device ${rootPartition}"`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`);
 	// Configure Timeshift settings
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/timeshift"`);
