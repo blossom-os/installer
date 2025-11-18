@@ -942,6 +942,68 @@ async function installMinimalKDEChroot() {
 	// Install additional packages for electron support
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`);
 
+	// Install Pipewire and Bluetooth
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber bluez bluez-utils gnome-bluetooth"`);
+	await execPromiseWithSudo(`${CHROOT} systemctl enable pipewire.service`);
+	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
+
+	// Install essential KDE applications
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle"`);
+
+	// Enable Chaotic-AUR repository
+	log('Enabling Chaotic-AUR repository...');
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman-key --lsign-key 3056513887B78AEB"`);
+
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"`);
+
+	// Add Chaotic-AUR to pacman.conf
+	await execPromiseWithSudo(`${CHROOT} bash -c "echo -e '\\n[chaotic-aur]\\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf"`);
+
+	// Update package databases
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Syu --noconfirm"`);
+
+	// Install yay and Bazaar
+	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar"`);
+
+	// Install Firefox, LibreOffice and VLC Flatpaks
+	await execPromiseWithSudo(`${CHROOT} bash -c "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC"`);
+
+	// Install Timeshift
+	await execPromiseWithSudo(`${CHROOT} bash -c "yay -S --noconfirm timeshift"`);
+	
+	// Set up Timeshift to use BTRFS snapshots and create initial snapshot
+	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --update --include-home yes --btrfs-device ${partitions.root} --snapshot-device ${partitions.root}"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`);
+	// Configure Timeshift settings
+	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/timeshift"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cat > /etc/timeshift/timeshift.json << 'EOF'
+	{
+		\"backup_device_uuid\" : \"226af845-a138-426a-bef7-db56a3d2a3b7\",
+		\"parent_device_uuid\" : \"0d05c65a-ea54-46d3-80f4-abbac401c650\",
+		\"do_first_run\" : \"false\",
+		\"btrfs_mode\" : \"true\",
+		\"include_btrfs_home_for_backup\" : \"true\",
+		\"include_btrfs_home_for_restore\" : \"false\",
+		\"stop_cron_emails\" : \"true\",
+		\"schedule_monthly\" : \"false\",
+		\"schedule_weekly\" : \"false\",
+		\"schedule_daily\" : \"true\",
+		\"schedule_hourly\" : \"true\",
+		\"schedule_boot\" : \"true\",
+		\"count_monthly\" : \"2\",
+		\"count_weekly\" : \"3\",
+		\"count_daily\" : \"5\",
+		\"count_hourly\" : \"6\",
+		\"count_boot\" : \"5\",
+		\"date_format\" : \"%Y-%m-%d %H:%M:%S\",
+		\"exclude\" : [],
+		\"exclude-apps\" : []
+	}
+	EOF"`);
+
 	log('Minimal KDE installation in chroot completed.');
 }
 
