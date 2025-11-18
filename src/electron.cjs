@@ -1103,9 +1103,8 @@ async function installGRUB(diskPath) {
 	await execPromiseWithSudo(`arch-chroot /mnt grub-install --target=i386-pc ${diskPath}`);
 
 	await execPromiseWithSudo(`arch-chroot /mnt pacman -S --noconfirm os-prober`);
-	await execPromiseWithSudo(
-		`arch-chroot /mnt sed -i 's/GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub`,
-	);
+	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub`);
+	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/Arch/blossomOS/' /etc/default/grub`);
 
 	// Generate GRUB config
 	await execPromiseWithSudo(`arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg`);
