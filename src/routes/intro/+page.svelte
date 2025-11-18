@@ -31,6 +31,6 @@
 	});
 </script>
 
-<div>
-    <!-- Just wait until KDE fully loaded -->
+<div class="w-screen h-screen cursor-none">
+	<!-- Just wait until KDE fully loaded -->
 </div>

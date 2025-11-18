@@ -38,7 +38,7 @@
 </script>
 
 <main class="bg-background">
-	<video autoplay muted onended={handleEnd} class="w-full h-full object-cover">
+	<video autoplay muted onended={handleEnd} class="w-full h-full object-cover cursor-none">
 		<source src="/intro.mp4" type="video/mp4" />
 		Your browser does not support the video tag.
 	</video>
