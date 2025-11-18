@@ -4,6 +4,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import '../app.css';
 	import { loadLanguageTranslations, getCurrentLanguage } from '$lib/stores/i18n.js';
+	import { goto } from '$app/navigation';
 
 	let ready: boolean = false;
 
@@ -15,7 +16,7 @@
 	});
 
 	// Check if current route should use card layout (exclude postinstall)
-	$: isPostinstall = $page.route?.id === '/postinstall';
+	$: isPostinstall = $page.route?.id?.startsWith('/postinstall');
 </script>
 
 <div class="dragbar"></div>
@@ -23,7 +24,8 @@
 {#if ready}
 	{#if isPostinstall}
 		<!-- Fullscreen layout for postinstall -->
-		<div class="min-h-screen bg-background p-8">
+		 <audio autoplay src="/intro_audio.mp3"></audio>
+		<div class="min-h-screen bg-background">
 			<slot />
 		</div>
 	{:else}

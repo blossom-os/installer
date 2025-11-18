@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
 	let isPostinstallMode = false;
@@ -24,13 +25,15 @@
 			}
 		}
 	});
+
+	function handleEnd() {
+		goto('/postinstall/welcome');
+	}
 </script>
 
-<main class="min-h-screen bg-background p-8">
-	<h1>Postinstall</h1>
-	{#if isPostinstallMode}
-		<p>Running in postinstall mode</p>
-	{:else}
-		<p>Not in postinstall mode</p>
-	{/if}
+<main class="bg-background">
+	<video autoplay muted onended={handleEnd} class="w-full h-full object-cover">
+		<source src="/intro.mp4" type="video/mp4" />
+		Your browser does not support the video tag.
+	</video>
 </main>
