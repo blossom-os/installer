@@ -18,7 +18,7 @@
     "selectDisk": {
       "title": "Choisis ton disque",
       "description": "Choisis où installer blossomOS. On va effacer tout sur le disque que tu choisis !",
-      "warning": "Installer blossomOS va complètement effacer toutes les données sur le disque choisi. Assure-toi d'avoir sauvegardé tes fichiers importants !",
+      "warning": "Installer blossomOS va complètement effacer toutes les données sur le disque choisi, sauf s'il y a une partition vide sur un disque Windows pour les partitions blossomOS. Assure-toi d'avoir sauvegardé tes fichiers importants !",
       "availableDisks": "Disques disponibles :",
       "selectDisk": "Choisir un disque",
       "diskInfo": "Infos du disque",

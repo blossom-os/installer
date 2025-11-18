@@ -18,7 +18,7 @@
     "selectDisk": {
       "title": "Pick Your Install Disk",
       "description": "Choose where you want blossomOS installed. We'll wipe everything on the disk you pick!",
-      "warning": "Installing blossomOS will completely wipe all data on your chosen disk. Make sure you've backed up anything important!",
+      "warning": "Installing blossomOS will completely wipe all data on your chosen disk, unless there's an empty partition on a Windows disk for blossomOS partitions. Make sure you've backed up anything important!",
       "availableDisks": "Available Disks:",
       "selectDisk": "Pick a disk",
       "diskInfo": "Disk Info",

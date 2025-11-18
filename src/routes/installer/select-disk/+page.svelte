@@ -165,7 +165,7 @@
 						</h4>
 						<p class="text-sm text-muted-foreground mt-1">
 							{translations?.installer?.selectDisk?.warning ||
-								'Installing blossomOS will completely erase all data on the selected disk. Make sure you have backed up any important files before proceeding.'}
+								'Installing blossomOS will completely erase all data on the selected disk, unless there is an empty partition on a Windows disk available for blossomOS partitions. Make sure you have backed up any important files before proceeding.'}
 						</p>
 					</div>
 				</div>

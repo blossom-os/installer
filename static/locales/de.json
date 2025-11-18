@@ -18,7 +18,7 @@
     "selectDisk": {
       "title": "Festplatte auswählen",
       "description": "Wähle aus, wo blossomOS installiert werden soll. Wir löschen alles auf der gewählten Festplatte!",
-      "warning": "Die Installation von blossomOS löscht alle Daten auf der gewählten Festplatte. Stelle sicher, dass du wichtige Dateien gesichert hast!",
+      "warning": "Die Installation von blossomOS löscht alle Daten auf der gewählten Festplatte, außer wenn es eine leere Partition auf einer Windows-Festplatte für blossomOS-Partitionen gibt. Stelle sicher, dass du wichtige Dateien gesichert hast!",
       "availableDisks": "Verfügbare Festplatten:",
       "selectDisk": "Festplatte auswählen",
       "diskInfo": "Festplatten-Info",

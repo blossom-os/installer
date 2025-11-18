@@ -986,6 +986,11 @@ async function installMinimalKDEChroot() {
 
 async function configureSystem(locale = 'en_US.UTF-8', keyboardLayout = 'us', timezone = 'UTC') {
 	log(`Configuring system with locale: ${locale}, keyboard: ${keyboardLayout}, timezone: ${timezone}`);
+	log(`Installer settings keyboard: ${installerSettings.keyboard}`);
+	
+	// Use the installer settings keyboard layout if available, fallback to parameter
+	const finalKeyboardLayout = installerSettings.keyboard || keyboardLayout;
+	log(`Final keyboard layout to be used: ${finalKeyboardLayout}`);
 	
 	// Set timezone based on IP location or user selection
 	const timezoneFile = timezone.replace('/', '\\/'); // Escape for sed
@@ -1009,7 +1014,7 @@ async function configureSystem(locale = 'en_US.UTF-8', keyboardLayout = 'us', ti
 	await execPromise(`echo 'LANG=${locale}' | sudo tee /mnt/etc/locale.conf`);
 
 	// Set keyboard layout
-	await execPromise(`echo 'KEYMAP=${keyboardLayout}' | sudo tee /mnt/etc/vconsole.conf`);
+	await execPromise(`echo 'KEYMAP=${finalKeyboardLayout}' | sudo tee /mnt/etc/vconsole.conf`);
 	
 	// Configure X11 keyboard layout
 	await execPromiseWithSudo(`arch-chroot /mnt mkdir -p /etc/X11/xorg.conf.d`);
@@ -1017,7 +1022,7 @@ async function configureSystem(locale = 'en_US.UTF-8', keyboardLayout = 'us', ti
 Section "InputClass"
     Identifier "system-keyboard"
     MatchIsKeyboard "on"
-    Option "XkbLayout" "${keyboardLayout}"
+    Option "XkbLayout" "${finalKeyboardLayout}"
 EndSection
 EOF`);
 
@@ -1068,6 +1073,24 @@ options root=${rootPartition} rootflags=subvol=@ rw quiet`;
 	await execPromise(
 		`echo -e '${bootEntry}' | sudo tee /mnt/boot/loader/entries/blossomos.conf`,
 	);
+
+	// Add Windows entry if Windows is detected
+	try {
+		const windowsPartition = await detectWindowsPartition();
+		if (windowsPartition) {
+			log(`Windows detected on ${windowsPartition}, adding boot entry...`);
+			const windowsEntry = `title   Windows
+	efi     /EFI/Microsoft/Boot/bootmgfw.efi`;
+			
+			await execPromise(
+				`echo -e '${windowsEntry}' | sudo tee /mnt/boot/loader/entries/windows.conf`,
+			);
+			log('Windows boot entry added successfully');
+		}
+	} catch (error) {
+		log('Error detecting/adding Windows entry:', error.message);
+		// Don't fail installation if Windows detection fails
+	}
 
 	// Configure loader
 	const loaderConfig = `default  blossomos
