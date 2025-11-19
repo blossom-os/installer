@@ -138,13 +138,6 @@
             await window.electron.runCommandAsync('flatpak update -y');
             for (const category of appCategories) {
                 for (const app of category.apps) {
-                    if (!selectedApps[app.id]) {
-                        await window.electron.runCommandAsync(`flatpak uninstall -y ${app.flatpak}`);
-                    }
-                }
-            }
-            for (const category of appCategories) {
-                for (const app of category.apps) {
                     if (selectedApps[app.id]) {
                         await window.electron.runCommandAsync(`flatpak install -y flathub ${app.flatpak}`);
                     }
