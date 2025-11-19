@@ -6,6 +6,7 @@
 	import { loadLanguageTranslations, getCurrentLanguage } from '$lib/stores/i18n.js';
 	
 	let ready: boolean = false;
+	$: pageRoute = $page.route?.id || '';
 
 	onMount(async () => {
 		// Load saved language and translations on app start
@@ -13,17 +14,21 @@
 		await loadLanguageTranslations(savedLanguage);
 		ready = true;
 	});
-
-	// Check if current route should use card layout (exclude postinstall)
-	$: pageRoute = $page.route?.id || '';
 </script>
 
 <div class="dragbar"></div>
 
 {#if ready}
-	{#if pageRoute?.startsWith('/postinstall')}
+	{#if pageRoute.startsWith('/postinstall')}
+		<audio autoplay id="intro-audio" src="/intro_audio.wav"></audio>
+	{/if}
+	{#if pageRoute?.startsWith('/postinstall/')}
 		<!-- Fullscreen layout for postinstall -->
-		<audio autoplay src="/intro_audio.mp3"></audio>
+		<audio autoplay src="/intro_loop.wav" loop></audio>
+		<div class="min-h-screen bg-background">
+			<slot />
+		</div>
+	{:else if pageRoute === '/postinstall'}
 		<div class="min-h-screen bg-background">
 			<slot />
 		</div>

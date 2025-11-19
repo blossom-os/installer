@@ -1036,7 +1036,7 @@ async function installMinimalKDEChroot(rootPartition) {
 	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Syu --noconfirm"`);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar kwin-effect-rounded-corners-git"`,
 	);
 
 	// Flatpaks
