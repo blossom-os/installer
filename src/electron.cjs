@@ -232,7 +232,7 @@ ipcMain.on('shutdown', (event) => {
 	});
 });
 
-ipcMain.on('run-command', (event, command) => {
+ipcMain.handle('run-command', (event, command) => {
 	exec(command, (error, stdout, stderr) => {
 		if (error) {
 			logError(`Command error (${command}):`, error);
