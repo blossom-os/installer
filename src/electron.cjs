@@ -951,7 +951,7 @@ async function installMinimalKDEChroot(rootPartition) {
 
 	// Minimal KDE packages
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak"`,
+		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak unzip git bash-completion"`,
 	);
 
 	// Debloat Plasma
