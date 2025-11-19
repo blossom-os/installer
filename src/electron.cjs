@@ -582,7 +582,7 @@ ipcMain.handle('get-installer-settings', async (event) => {
 });
 
 // Install blossomOS
-ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
+ipcMain.handle('install-system', async (event, diskPath) => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			log(`Starting installation on ${diskPath}`);
@@ -657,9 +657,9 @@ ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
 
 			// Use saved installer settings for configuration
 			log(
-				`Using installer settings - Language: ${installerSettings.language}, Locale: ${installerSettings.locale}, Keyboard: ${keyboard}, Timezone: ${timezone}`,
+				`Using installer settings - Language: ${installerSettings.language}, Locale: ${installerSettings.locale}, Keyboard: ${installerSettings.keyboard}, Timezone: ${timezone}`,
 			);
-			await configureSystem(installerSettings.locale, keyboard, timezone);
+			await configureSystem(installerSettings.locale, installerSettings.keyboard, timezone);
 
 			// Step 6: Install bootloader
 			event.sender.send('installation-progress', { step: 'bootloader', progress: 85 });
