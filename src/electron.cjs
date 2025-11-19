@@ -108,7 +108,7 @@ function createMainWindow() {
 
 	// Check for postinstall file
 	const isPostInstall = fs.existsSync('/home/liveuser/.postinstall');
-	
+
 	if (dev) {
 		loadVite(port);
 		// Navigate to postinstall route if flag is present
@@ -146,16 +146,16 @@ ipcMain.handle('get-timezone-by-ip', async () => {
 	try {
 		log('Attempting to detect timezone via IP geolocation...');
 		const response = await fetch('http://ip-api.com/json/?fields=timezone', {
-			timeout: 10000 // 10 second timeout
+			timeout: 10000, // 10 second timeout
 		});
-		
+
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 		}
-		
+
 		const data = await response.json();
 		log('Geolocation API response:', data);
-		
+
 		if (data.timezone) {
 			log(`Detected timezone: ${data.timezone}`);
 			return data.timezone;
@@ -174,8 +174,10 @@ ipcMain.handle('get-timezone-by-ip', async () => {
 ipcMain.handle('get-available-locales', async () => {
 	try {
 		const result = await execPromise('locale -a');
-		const locales = result.stdout.split('\n').filter(locale => locale.includes('UTF-8') || locale.includes('utf8'));
-		
+		const locales = result.stdout
+			.split('\n')
+			.filter((locale) => locale.includes('UTF-8') || locale.includes('utf8'));
+
 		// Common locales with display names
 		const commonLocales = [
 			{ code: 'en_US.UTF-8', name: 'English (United States)', lang: 'en' },
@@ -187,9 +189,9 @@ ipcMain.handle('get-available-locales', async () => {
 			{ code: 'pt_PT.UTF-8', name: 'Português (Portugal)', lang: 'pt' },
 			{ code: 'ru_RU.UTF-8', name: 'Русский (Россия)', lang: 'ru' },
 			{ code: 'zh_CN.UTF-8', name: '中文 (中国)', lang: 'zh' },
-			{ code: 'ja_JP.UTF-8', name: '日本語 (日本)', lang: 'ja' }
+			{ code: 'ja_JP.UTF-8', name: '日本語 (日本)', lang: 'ja' },
 		];
-		
+
 		return commonLocales;
 	} catch (error) {
 		logError('Failed to get available locales:', error);
@@ -209,9 +211,9 @@ ipcMain.handle('get-available-keyboard-layouts', async () => {
 		{ code: 'pt', name: 'Portuguese', lang: 'pt' },
 		{ code: 'ru', name: 'Russian', lang: 'ru' },
 		{ code: 'cn', name: 'Chinese', lang: 'zh' },
-		{ code: 'jp', name: 'Japanese', lang: 'ja' }
+		{ code: 'jp', name: 'Japanese', lang: 'ja' },
 	];
-	
+
 	return keyboardLayouts;
 });
 app.on('window-all-closed', () => {
@@ -415,68 +417,71 @@ ipcMain.handle('delete-wifi-config', async (event, ssid) => {
 // Disk scanning handler (filters out USB devices)
 ipcMain.handle('scan-disks', async (event) => {
 	return new Promise((resolve, reject) => {
-		exec('lsblk -J -o NAME,SIZE,MODEL,TYPE,TRAN,MOUNTPOINT,FSTYPE,ROTA', (error, stdout, stderr) => {
-			if (error) {
-				logError('Disk scan error:', error);
-				resolve([]);
-				return;
-			}
-
-			try {
-				const data = JSON.parse(stdout);
-				const disks = [];
-
-				for (const device of data.blockdevices || []) {
-					// Filter out USB devices and only include physical disks
-					if (
-						device.type === 'disk' &&
-						device.tran !== 'usb' &&
-						!device.name.startsWith('sr') && // CD/DVD drives
-						!device.name.startsWith('loop')
-					) {
-						// Loop devices
-
-						const partitions = [];
-						if (device.children) {
-							for (const child of device.children) {
-								partitions.push({
-									name: child.name,
-									size: child.size,
-									fstype: child.fstype,
-									mountpoint: child.mountpoint,
-								});
-							}
-						}
-
-						// Improved disk type detection
-						let diskType = 'HDD'; // Default to HDD
-						
-						if (device.tran === 'nvme') {
-							diskType = 'NVMe';
-						} else if (device.rota === false) {
-							// ROTA=0 means no rotation, indicating SSD
-							diskType = 'SSD';
-						} else if (device.model?.toLowerCase().includes('ssd')) {
-							// Fallback: check model name for "ssd"
-							diskType = 'SSD';
-						}
-
-						disks.push({
-							name: `/dev/${device.name}`,
-							size: device.size,
-							model: device.model || 'Unknown',
-							type: diskType,
-							partitions: partitions,
-						});
-					}
+		exec(
+			'lsblk -J -o NAME,SIZE,MODEL,TYPE,TRAN,MOUNTPOINT,FSTYPE,ROTA',
+			(error, stdout, stderr) => {
+				if (error) {
+					logError('Disk scan error:', error);
+					resolve([]);
+					return;
 				}
 
-				resolve(disks);
-			} catch (parseError) {
-				logError('Failed to parse disk data:', parseError);
-				resolve([]);
-			}
-		});
+				try {
+					const data = JSON.parse(stdout);
+					const disks = [];
+
+					for (const device of data.blockdevices || []) {
+						// Filter out USB devices and only include physical disks
+						if (
+							device.type === 'disk' &&
+							device.tran !== 'usb' &&
+							!device.name.startsWith('sr') && // CD/DVD drives
+							!device.name.startsWith('loop')
+						) {
+							// Loop devices
+
+							const partitions = [];
+							if (device.children) {
+								for (const child of device.children) {
+									partitions.push({
+										name: child.name,
+										size: child.size,
+										fstype: child.fstype,
+										mountpoint: child.mountpoint,
+									});
+								}
+							}
+
+							// Improved disk type detection
+							let diskType = 'HDD'; // Default to HDD
+
+							if (device.tran === 'nvme') {
+								diskType = 'NVMe';
+							} else if (device.rota === false) {
+								// ROTA=0 means no rotation, indicating SSD
+								diskType = 'SSD';
+							} else if (device.model?.toLowerCase().includes('ssd')) {
+								// Fallback: check model name for "ssd"
+								diskType = 'SSD';
+							}
+
+							disks.push({
+								name: `/dev/${device.name}`,
+								size: device.size,
+								model: device.model || 'Unknown',
+								type: diskType,
+								partitions: partitions,
+							});
+						}
+					}
+
+					resolve(disks);
+				} catch (parseError) {
+					logError('Failed to parse disk data:', parseError);
+					resolve([]);
+				}
+			},
+		);
 	});
 });
 
@@ -499,7 +504,10 @@ ipcMain.handle('detect-nvidia', async (event) => {
 				return;
 			}
 
-			const gpuLines = stdout.trim().split('\n').filter(line => line.trim());
+			const gpuLines = stdout
+				.trim()
+				.split('\n')
+				.filter((line) => line.trim());
 			if (gpuLines.length === 0) {
 				log('NVIDIA detection: No NVIDIA cards in lspci output');
 				resolve({ hasNvidia: false });
@@ -507,33 +515,37 @@ ipcMain.handle('detect-nvidia', async (event) => {
 			}
 
 			log('NVIDIA detection: Found NVIDIA hardware');
-			
+
 			// Parse GPU information
-			const gpuInfo = gpuLines.map(line => {
+			const gpuInfo = gpuLines.map((line) => {
 				// Extract GPU name from lspci output
 				const match = line.match(/NVIDIA.*?: (.+)/);
 				return {
 					name: match ? match[1].trim() : 'NVIDIA Graphics Card',
-					raw: line.trim()
+					raw: line.trim(),
 				};
 			});
 
 			// Try to get additional info with nvidia-smi if available
-			exec('nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits', (smiError, smiOut) => {
-				if (!smiError && smiOut.trim()) {
-					const smiLines = smiOut.trim().split('\n');
-					smiLines.forEach((smiLine, index) => {
-						if (gpuInfo[index]) {
-							const [name, memory] = smiLine.split(',').map(s => s.trim());
-							if (name && name !== 'N/A') gpuInfo[index].name = name;
-							if (memory && memory !== 'N/A') gpuInfo[index].memory = `${memory} MB`;
-						}
-					});
-				}
-				
-				log('NVIDIA detection result:', { hasNvidia: true, gpuInfo });
-				resolve({ hasNvidia: true, gpuInfo });
-			});
+			exec(
+				'nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits',
+				(smiError, smiOut) => {
+					if (!smiError && smiOut.trim()) {
+						const smiLines = smiOut.trim().split('\n');
+						smiLines.forEach((smiLine, index) => {
+							if (gpuInfo[index]) {
+								const [name, memory] = smiLine.split(',').map((s) => s.trim());
+								if (name && name !== 'N/A') gpuInfo[index].name = name;
+								if (memory && memory !== 'N/A')
+									gpuInfo[index].memory = `${memory} MB`;
+							}
+						});
+					}
+
+					log('NVIDIA detection result:', { hasNvidia: true, gpuInfo });
+					resolve({ hasNvidia: true, gpuInfo });
+				},
+			);
 		});
 	});
 });
@@ -542,14 +554,14 @@ ipcMain.handle('detect-nvidia', async (event) => {
 let installerSettings = {
 	language: 'en',
 	keyboard: 'us',
-	locale: 'en_US.UTF-8'
+	locale: 'en_US.UTF-8',
 };
 
 const languageToLocaleMap = {
-	'en': 'en_US.UTF-8',
-	'de': 'de_DE.UTF-8', 
-	'fr': 'fr_FR.UTF-8',
-	'es': 'es_ES.UTF-8'
+	en: 'en_US.UTF-8',
+	de: 'de_DE.UTF-8',
+	fr: 'fr_FR.UTF-8',
+	es: 'es_ES.UTF-8',
 };
 
 ipcMain.handle('set-language', async (event, languageCode) => {
@@ -628,9 +640,9 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			// Step 5: Configure system
 			event.sender.send('installation-progress', { step: 'configure', progress: 70 });
 			log('Configuring system...');
-			
+
 			let timezone = 'UTC';
-			
+
 			// Try to get timezone by IP
 			try {
 				const response = await fetch('http://ip-api.com/json/?fields=timezone');
@@ -642,9 +654,11 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			} catch (error) {
 				logError('Failed to detect timezone, using UTC:', error);
 			}
-			
+
 			// Use saved installer settings for configuration
-			log(`Using installer settings - Language: ${installerSettings.language}, Locale: ${installerSettings.locale}, Keyboard: ${installerSettings.keyboard}, Timezone: ${timezone}`);
+			log(
+				`Using installer settings - Language: ${installerSettings.language}, Locale: ${installerSettings.locale}, Keyboard: ${installerSettings.keyboard}, Timezone: ${timezone}`,
+			);
 			await configureSystem(installerSettings.locale, installerSettings.keyboard, timezone);
 
 			// Step 6: Install bootloader
@@ -905,34 +919,46 @@ async function installBaseSystem(rootPartition) {
 }
 
 async function installMinimalKDEChroot(rootPartition) {
-	const CHROOT = "arch-chroot /mnt";
-	const USER = "liveuser";
+	const CHROOT = 'arch-chroot /mnt';
+	const USER = 'liveuser';
 
 	log('Starting minimal KDE installation in chroot...');
 
 	// Minimal KDE packages
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop sddm flatpak unzip"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop sddm flatpak unzip"`,
+	);
 
 	// User setup
-	await execPromiseWithSudo(`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`,
+	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "passwd -d ${USER}"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`,
+	);
 
 	// Bun installation
-	await execPromiseWithSudo(`${CHROOT} bash -c "sudo -u ${USER} bash -c 'curl -fsSL https://bun.sh/install | bash'"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "sudo -u ${USER} bash -c 'curl -fsSL https://bun.sh/install | bash'"`,
+	);
 
 	log('Configuring SDDM autologin...');
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/sddm.conf.d"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=plasma.desktop\nEOF"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=plasma.desktop\nEOF"`,
+	);
 
 	// Autostart desktop entry
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /home/${USER}/.config/autostart"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "cat >/home/${USER}/.config/autostart/postinstall.desktop <<EOF\n[Desktop Entry]\nName=BlossomOS Post Install\nExec=/opt/blossomos-installer/start-postinstall.sh\nType=Application\nX-KDE-autostart-after=panel\nHidden=false\nNoDisplay=false\nEOF"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "cat >/home/${USER}/.config/autostart/postinstall.desktop <<EOF\n[Desktop Entry]\nName=BlossomOS Post Install\nExec=/opt/blossomos-installer/start-postinstall.sh\nType=Application\nX-KDE-autostart-after=panel\nHidden=false\nNoDisplay=false\nEOF"`,
+	);
 	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /home/${USER}`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable sddm.service`);
 
 	// Copy installer files
-	log("Copying installer files...");
+	log('Copying installer files...');
 	await execPromiseWithSudo(`cp -r /opt/blossomos-installer /mnt/opt/blossomos-installer`);
 	await execPromiseWithSudo(`chmod +x /mnt/opt/blossomos-installer/start-postinstall.sh`);
 	await execPromiseWithSudo(`touch /mnt/home/${USER}/.postinstall`);
@@ -940,28 +966,54 @@ async function installMinimalKDEChroot(rootPartition) {
 	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /opt/blossomos-installer`);
 
 	// Essential packages
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed c-ares ffmpeg gtk3 libevent libvpx libxslt libxss minizip nss re2 snappy libnotify libappindicator-gtk3 curl unzip git at-spi2-core"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils gnome-bluetooth alsa-utils"`,
+	);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed cups cups-browsed avahi nss-mdns hplip"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed cups cups-browsed avahi nss-mdns hplip"`,
+	);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable cups cups-browsed avahi-daemon`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "sed -i '/^hosts:/ s/mymachines resolve \\[!UNAVAIL=return\\] files myhostname dns/mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns/' /etc/nsswitch.conf"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "sed -i '/^hosts:/ s/mymachines resolve \\[!UNAVAIL=return\\] files myhostname dns/mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns/' /etc/nsswitch.conf"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle"`,
+	);
 
 	// Chaotic-AUR setup
 	log('Enabling Chaotic-AUR repository...');
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com"`,
+	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman-key --lsign-key 3056513887B78AEB"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "echo -e '\\n[chaotic-aur]\\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "echo -e '\\n[chaotic-aur]\\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf"`,
+	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Syu --noconfirm"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar"`,
+	);
 
 	// Flatpaks
-	await execPromiseWithSudo(`${CHROOT} bash -c "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC"`,
+	);
 
 	// Timeshift setup with dynamic UUIDs
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -S --noconfirm --needed timeshift"`);
@@ -975,45 +1027,51 @@ async function installMinimalKDEChroot(rootPartition) {
 	log(`Detected UUID for Timeshift: ${backupUUID}`);
 
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/timeshift"`);
-	await execPromiseWithSudo(`${CHROOT} bash -c "echo '{\\\"backup_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"parent_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"do_first_run\\\" : \\\"false\\\", \\\"btrfs_mode\\\" : \\\"true\\\", \\\"include_btrfs_home_for_backup\\\" : \\\"true\\\", \\\"include_btrfs_home_for_restore\\\" : \\\"false\\\", \\\"stop_cron_emails\\\" : \\\"true\\\", \\\"schedule_monthly\\\" : \\\"false\\\", \\\"schedule_weekly\\\" : \\\"false\\\", \\\"schedule_daily\\\" : \\\"true\\\", \\\"schedule_hourly\\\" : \\\"true\\\", \\\"schedule_boot\\\" : \\\"true\\\", \\\"count_monthly\\\" : \\\"2\\\", \\\"count_weekly\\\" : \\\"3\\\", \\\"count_daily\\\" : \\\"5\\\", \\\"count_hourly\\\" : \\\"6\\\", \\\"count_boot\\\" : \\\"5\\\", \\\"date_format\\\" : \\\"%Y-%m-%d %H:%M:%S\\\", \\\"exclude\\\" : [], \\\"exclude-apps\\\" : [] }' > /etc/timeshift/timeshift.json"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "echo '{\\\"backup_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"parent_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"do_first_run\\\" : \\\"false\\\", \\\"btrfs_mode\\\" : \\\"true\\\", \\\"include_btrfs_home_for_backup\\\" : \\\"true\\\", \\\"include_btrfs_home_for_restore\\\" : \\\"false\\\", \\\"stop_cron_emails\\\" : \\\"true\\\", \\\"schedule_monthly\\\" : \\\"false\\\", \\\"schedule_weekly\\\" : \\\"false\\\", \\\"schedule_daily\\\" : \\\"true\\\", \\\"schedule_hourly\\\" : \\\"true\\\", \\\"schedule_boot\\\" : \\\"true\\\", \\\"count_monthly\\\" : \\\"2\\\", \\\"count_weekly\\\" : \\\"3\\\", \\\"count_daily\\\" : \\\"5\\\", \\\"count_hourly\\\" : \\\"6\\\", \\\"count_boot\\\" : \\\"5\\\", \\\"date_format\\\" : \\\"%Y-%m-%d %H:%M:%S\\\", \\\"exclude\\\" : [], \\\"exclude-apps\\\" : [] }' > /etc/timeshift/timeshift.json"`,
+	);
 
-	await execPromiseWithSudo(`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`,
+	);
 
 	log('Minimal KDE installation in chroot completed.');
 }
 
 async function configureSystem(locale = 'en_US.UTF-8', keyboardLayout = 'us', timezone = 'UTC') {
-	log(`Configuring system with locale: ${locale}, keyboard: ${keyboardLayout}, timezone: ${timezone}`);
+	log(
+		`Configuring system with locale: ${locale}, keyboard: ${keyboardLayout}, timezone: ${timezone}`,
+	);
 	log(`Installer settings keyboard: ${installerSettings.keyboard}`);
-	
+
 	// Use the installer settings keyboard layout if available, fallback to parameter
 	const finalKeyboardLayout = installerSettings.keyboard || keyboardLayout;
 	log(`Final keyboard layout to be used: ${finalKeyboardLayout}`);
-	
+
 	// Set timezone based on IP location or user selection
 	const timezoneFile = timezone.replace('/', '\\/'); // Escape for sed
-	await execPromiseWithSudo(`arch-chroot /mnt ln -sf /usr/share/zoneinfo/${timezone} /etc/localtime`);
+	await execPromiseWithSudo(
+		`arch-chroot /mnt ln -sf /usr/share/zoneinfo/${timezone} /etc/localtime`,
+	);
 	await execPromiseWithSudo(`arch-chroot /mnt hwclock --systohc`);
 
 	// Configure locale based on selection
 	const localeBase = locale.split('.')[0]; // e.g., en_US from en_US.UTF-8
-	await execPromiseWithSudo(
-		`arch-chroot /mnt sed -i 's/#${locale}/${locale}/' /etc/locale.gen`,
-	);
-	
+	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/#${locale}/${locale}/' /etc/locale.gen`);
+
 	// Also enable en_US.UTF-8 as fallback if different locale selected
 	if (locale !== 'en_US.UTF-8') {
 		await execPromiseWithSudo(
 			`arch-chroot /mnt sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen`,
 		);
 	}
-	
+
 	await execPromiseWithSudo(`arch-chroot /mnt locale-gen`);
 	await execPromise(`echo 'LANG=${locale}' | sudo tee /mnt/etc/locale.conf`);
 
 	// Set keyboard layout
 	await execPromise(`echo 'KEYMAP=${finalKeyboardLayout}' | sudo tee /mnt/etc/vconsole.conf`);
-	
+
 	// Configure X11 keyboard layout
 	await execPromiseWithSudo(`arch-chroot /mnt mkdir -p /etc/X11/xorg.conf.d`);
 	await execPromise(`cat << EOF | sudo tee /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
@@ -1045,7 +1103,7 @@ EOF`);
 		if (nvidiaDetected) {
 			log('NVIDIA card detected, installing NVIDIA drivers...');
 			progressCallback({ step: 'nvidia-install', progress: 85 });
-			
+
 			// Install NVIDIA packages
 			await execPromiseWithSudo(`arch-chroot /mnt pacman -S --noconfirm nvidia nvidia-utils`);
 			log('NVIDIA drivers installed successfully');
@@ -1068,9 +1126,7 @@ linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
 options root=${rootPartition} rootflags=subvol=@ rw quiet`;
 
-	await execPromise(
-		`echo -e '${bootEntry}' | sudo tee /mnt/boot/loader/entries/blossomos.conf`,
-	);
+	await execPromise(`echo -e '${bootEntry}' | sudo tee /mnt/boot/loader/entries/blossomos.conf`);
 
 	// Add Windows entry if Windows is detected
 	try {
@@ -1079,7 +1135,7 @@ options root=${rootPartition} rootflags=subvol=@ rw quiet`;
 			log(`Windows detected on ${windowsPartition}, adding boot entry...`);
 			const windowsEntry = `title   Windows
 	efi     /EFI/Microsoft/Boot/bootmgfw.efi`;
-			
+
 			await execPromise(
 				`echo -e '${windowsEntry}' | sudo tee /mnt/boot/loader/entries/windows.conf`,
 			);
@@ -1107,7 +1163,9 @@ async function installGRUB(diskPath) {
 	await execPromiseWithSudo(`arch-chroot /mnt grub-install --target=i386-pc ${diskPath}`);
 
 	await execPromiseWithSudo(`arch-chroot /mnt pacman -S --noconfirm os-prober`);
-	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub`);
+	await execPromiseWithSudo(
+		`arch-chroot /mnt sed -i 's/#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub`,
+	);
 	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/Arch/blossomOS/' /etc/default/grub`);
 
 	// Generate GRUB config
@@ -1162,23 +1220,29 @@ async function getLastPartitionNumber(diskPath) {
 	}
 }
 
-ipcMain.handle('setup-user-account', async (event, userData) => {
-	return new Promise(async (resolve, reject) => {
-		try {
-			log(`Setting up user account: ${userData.username}`);
-			await execPromiseWithSudo(`useradd -m -G wheel,audio,video,optical,storage,power,network ${userData.username}`);
-			if (userData.password && userData.password.length > 0) {
-				await execPromiseWithSudo(`echo '${userData.username}:${userData.password}' | chpasswd`);
-			} else {
-				await execPromiseWithSudo(`passwd -d ${userData.username}`);
-			}
-			await execPromise(`echo '${userData.computerName}' | sudo tee /etc/hostname`);
+ipcMain.handle(
+	'setup-user-account',
+	async (event, name, computerName, email, username, password) => {
+		return new Promise(async (resolve, reject) => {
+			try {
+				log(`Setting up user account: ${username}`);
+				await execPromiseWithSudo(
+					`useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`,
+				);
+				if (password && password.length > 0) {
+					await execPromiseWithSudo(`echo '${username}:${password}' | chpasswd`);
+				} else {
+					await execPromiseWithSudo(`passwd -d ${username}`);
+				}
+				await execPromise(`echo '${computerName}' | sudo tee /etc/hostname`);
 
-			await execPromiseWithSudo(`bash -c "sed -i 's/^Email=.*/Email=${userData.email}/' /var/lib/AccountsService/users/${userData.username} || echo 'Email=${userData.email}' >> /var/lib/AccountsService/users/${userData.username}"`);
+				await execPromiseWithSudo(
+					`bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`,
+				);
 
-			await execPromiseWithSudo(`chfn -f "${userData.name}" ${userData.username}`);
-			// Create systemd service to delete liveuser and installer after first boot once
-			const serviceContent = `[Unit]
+				await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
+				// Create systemd service to delete liveuser and installer after first boot once
+				const serviceContent = `[Unit]
 Description=Remove liveuser and installer after first boot
 After=network.target
 
@@ -1189,18 +1253,21 @@ ExecStart=/bin/bash -c 'userdel -r liveuser; rm -rf /opt/blossomos-installer; rm
 [Install]
 WantedBy=multi-user.target`;
 
-			await execPromise(`echo -e '${serviceContent}' | sudo tee /etc/systemd/system/remove-liveuser.service`);
-			await execPromiseWithSudo(`systemctl enable remove-liveuser.service`);
+				await execPromise(
+					`echo -e '${serviceContent}' | sudo tee /etc/systemd/system/remove-liveuser.service`,
+				);
+				await execPromiseWithSudo(`systemctl enable remove-liveuser.service`);
 
-			await execPromiseWithSudo(`rm -f /etc/sddm.conf.d/autologin.conf`);
+				await execPromiseWithSudo(`rm -f /etc/sddm.conf.d/autologin.conf`);
 
-			log('User account setup completed successfully');
-			resolve({ success: true });
+				log('User account setup completed successfully');
+				resolve({ success: true });
 
-			await execPromiseWithSudo(`reboot`);
-		} catch (error) {
-			logError('User account setup error:', error);
-			reject({ error: error.message });
-		}
-	});
-});
+				await execPromiseWithSudo(`reboot`);
+			} catch (error) {
+				logError('User account setup error:', error);
+				reject({ error: error.message });
+			}
+		});
+	},
+);

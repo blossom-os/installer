@@ -51,13 +51,13 @@
         }
         if (window.electron) {
             isLoading = true;
-            window.electron.setupUserAccount({
+            window.electron.setupUserAccount(
                 name,
                 computerName,
                 email,
                 username,
                 password
-            }).then(() => {
+            ).then(() => {
                 goto('/postinstall/finish');
             }).catch((err: Error) => {
                 isLoading = false;

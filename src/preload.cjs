@@ -91,9 +91,16 @@ contextBridge.exposeInMainWorld('electron', {
 			throw error;
 		}
 	},
-	setupUserAccount: (userData) => {
-		return ipcRenderer.invoke('setup-user-account', userData);
-	}
+	setupUserAccount: (name, computerName, email, username, password) => {
+		return ipcRenderer.invoke(
+			'setup-user-account',
+			name,
+			computerName,
+			email,
+			username,
+			password,
+		);
+	},
 });
 
 // Also expose installer-specific functions under window.installer
@@ -119,7 +126,7 @@ contextBridge.exposeInMainWorld('installer', {
 		if (typeof localStorage !== 'undefined') {
 			localStorage.setItem('installer-keyboard', keyboardCode);
 		}
-		// Also save to electron main process  
+		// Also save to electron main process
 		ipcRenderer.invoke('set-keyboard', keyboardCode);
 		return Promise.resolve(keyboardCode);
 	},
@@ -161,5 +168,5 @@ contextBridge.exposeInMainWorld('installer', {
 			console.error('Failed to load translations:', error);
 			throw error;
 		}
-	}
+	},
 });
