@@ -682,7 +682,7 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
 
 			// Create hook to preserve blossomOS files
-			const hookContent = `[Trigger] Operation = Install Operation = Upgrade Type = Package Target = filesystem [Action] Description = Preserving blossomOS branding files... When = PostTransaction Exec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true;`;
+			const hookContent = `[Trigger]\nOperation = Install\nOperation = Upgrade\nType = Package\nTarget = filesystem\n\n[Action]\nDescription = Preserving blossomOS branding files...\nWhen = PostTransaction\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
 
 			await execPromise(
 				`echo -e '${hookContent}' | sudo tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`,
