@@ -63,37 +63,37 @@
             name: 'Choose your browser',
             key: 'browser',
             apps: [
-                { id: 'firefox', name: 'Firefox', icon: '🦊', flatpak: 'org.mozilla.firefox', selected: true },
-                { id: 'chrome', name: 'Chrome', icon: '🌐', flatpak: 'com.google.Chrome', selected: false },
-                { id: 'zen', name: 'Zen', icon: '🧘', flatpak: 'org.zen.browser', selected: false },
-                { id: 'edge', name: 'Microsoft Edge', icon: '🛡️', flatpak: 'com.microsoft.Edge', selected: false },
+                { id: 'firefox', name: 'Firefox', icon: '/apps/firefox.svg', flatpak: 'org.mozilla.firefox', selected: true },
+                { id: 'chrome', name: 'Chrome', icon: '/apps/chrome.svg', flatpak: 'com.google.Chrome', selected: false },
+                { id: 'zen', name: 'Zen', icon: '/apps/zen.svg', flatpak: 'org.zen.browser', selected: false },
+                { id: 'edge', name: 'Microsoft Edge', icon: '/apps/edge.svg', flatpak: 'com.microsoft.Edge', selected: false },
             ],
         },
         {
             name: 'Gaming apps',
             key: 'gaming',
             apps: [
-                { id: 'steam', name: 'Steam', icon: '🎮', flatpak: 'com.valvesoftware.Steam', selected: false },
-                { id: 'lutris', name: 'Lutris', icon: '🕹️', flatpak: 'net.lutris.Lutris', selected: false },
-                { id: 'heroic', name: 'Heroic Games Launcher', icon: '🏆', flatpak: 'com.heroicgameslauncher.hgl', selected: false },
+                { id: 'steam', name: 'Steam', icon: '/apps/steam.svg', flatpak: 'com.valvesoftware.Steam', selected: false },
+                { id: 'lutris', name: 'Lutris', icon: '/apps/lutris.svg', flatpak: 'net.lutris.Lutris', selected: false },
+                { id: 'heroic', name: 'Heroic Games Launcher', icon: '/apps/heroic.svg', flatpak: 'com.heroicgameslauncher.hgl', selected: false },
             ],
         },
         {
             name: 'Messenger apps',
             key: 'messenger',
             apps: [
-                { id: 'signal', name: 'Signal', icon: '📶', flatpak: 'org.signal.Signal', selected: false },
-                { id: 'telegram', name: 'Telegram', icon: '✈️', flatpak: 'org.telegram.desktop', selected: false },
-                { id: 'discord', name: 'Discord', icon: '💬', flatpak: 'com.discordapp.Discord', selected: false },
+                { id: 'signal', name: 'Signal', icon: '/apps/signal.svg', flatpak: 'org.signal.Signal', selected: false },
+                { id: 'telegram', name: 'Telegram', icon: '/apps/telegram.svg', flatpak: 'org.telegram.desktop', selected: false },
+                { id: 'discord', name: 'Discord', icon: '/apps/discord.svg', flatpak: 'com.discordapp.Discord', selected: false },
             ],
         },
         {
             name: 'Music & Media apps',
             key: 'music',
             apps: [
-                { id: 'spotify', name: 'Spotify', icon: '🎵', flatpak: 'com.spotify.Client', selected: false },
-                { id: 'tidal', name: 'Tidal Hi-Fi', icon: '🌊', flatpak: 'com.tidal-hifi.TidalHiFi', selected: false },
-                { id: 'vlc', name: 'VLC', icon: '📺', flatpak: 'org.videolan.VLC', selected: true },
+                { id: 'spotify', name: 'Spotify', icon: '/apps/spotify.svg', flatpak: 'com.spotify.Client', selected: false },
+                { id: 'tidal', name: 'Tidal Hi-Fi', icon: '/apps/tidal.svg', flatpak: 'com.tidal-hifi.TidalHiFi', selected: false },
+                { id: 'vlc', name: 'VLC', icon: '/apps/vlc.svg', flatpak: 'org.videolan.VLC', selected: true },
             ],
         },
     ];
@@ -142,7 +142,7 @@
 </script>
 
 <main class="bg-background p-8">
-    <Card.Root class="w-4xl mx-auto my-16">
+    <Card.Root class="w-4xl mx-auto my-8">
         <Card.Header>
             <Card.Title>Install your favourite apps</Card.Title>
             <Card.Description>
@@ -175,7 +175,9 @@
                                 {#each category.apps as app}
                                     <button type="button" class="w-full" aria-pressed={selectedApps[app.id]} aria-label={app.name} on:click={() => toggleApp(app.id)}>
                                         <Item.Root class={getTileClass(app.id)}>
-                                            <div class="text-3xl mb-2">{app.icon}</div>
+                                            <div class="text-3xl mb-2">
+                                                <img src={app.icon} alt={app.name + ' icon'} class="h-12 w-12" />
+                                            </div>
                                             <div class="font-medium">{app.name}</div>
                                             {#if selectedApps[app.id]}
                                                 <div class="mt-2 text-primary">✓ Selected</div>

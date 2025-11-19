@@ -1190,6 +1190,8 @@ WantedBy=multi-user.target`;
 			await execPromise(`echo -e '${serviceContent}' | sudo tee /etc/systemd/system/remove-liveuser.service`);
 			await execPromiseWithSudo(`systemctl enable remove-liveuser.service`);
 
+			await execPromiseWithSudo(`rm -f /etc/sddm.conf.d/autologin.conf`);
+
 			log('User account setup completed successfully');
 			resolve({ success: true });
 

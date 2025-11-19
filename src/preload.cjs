@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('electron', {
 		ipcRenderer.send('shutdown');
 	},
 	runCommand: (command) => {
-		ipcRenderer.send('run-command', command);
+		return ipcRenderer.invoke('run-command', command);
 	},
 	scanWifi: () => {
 		return ipcRenderer.invoke('scan-wifi');
