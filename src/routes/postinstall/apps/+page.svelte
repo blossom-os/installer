@@ -74,7 +74,7 @@
             apps: [
                 { id: 'firefox', name: 'Firefox', icon: '/apps/firefox.svg', flatpak: 'org.mozilla.firefox', selected: true },
                 { id: 'chrome', name: 'Chrome', icon: '/apps/chrome.svg', flatpak: 'com.google.Chrome', selected: false },
-                { id: 'zen', name: 'Zen', icon: '/apps/zen.svg', flatpak: 'org.zen.browser', selected: false },
+                { id: 'zen', name: 'Zen', icon: '/apps/zen.png', flatpak: 'app.zen_browser.zen', selected: false },
                 { id: 'edge', name: 'Microsoft Edge', icon: '/apps/edge.svg', flatpak: 'com.microsoft.Edge', selected: false },
             ],
         },
@@ -93,16 +93,16 @@
             apps: [
                 { id: 'signal', name: 'Signal', icon: '/apps/signal.svg', flatpak: 'org.signal.Signal', selected: false },
                 { id: 'telegram', name: 'Telegram', icon: '/apps/telegram.svg', flatpak: 'org.telegram.desktop', selected: false },
-                { id: 'discord', name: 'Discord', icon: '/apps/discord.svg', flatpak: 'com.discordapp.Discord', selected: false },
+                { id: 'discord', name: 'Discord', icon: '/apps/discord.png', flatpak: 'com.discordapp.Discord', selected: false },
             ],
         },
         {
             name: 'Music & Media apps',
             key: 'music',
             apps: [
-                { id: 'spotify', name: 'Spotify', icon: '/apps/spotify.svg', flatpak: 'com.spotify.Client', selected: false },
+                { id: 'spotify', name: 'Spotify', icon: '/apps/spotify.png', flatpak: 'com.spotify.Client', selected: false },
                 { id: 'tidal', name: 'Tidal Hi-Fi', icon: '/apps/tidal.svg', flatpak: 'com.mastermindzh.tidal-hifi', selected: false },
-                { id: 'vlc', name: 'VLC', icon: '/apps/vlc.svg', flatpak: 'org.videolan.VLC', selected: true },
+                { id: 'vlc', name: 'VLC', icon: '/apps/vlc.png', flatpak: 'org.videolan.VLC', selected: true },
             ],
         },
     ];
@@ -190,7 +190,7 @@
                                     <button type="button" class="w-full" aria-pressed={selectedApps[app.id]} aria-label={app.name} on:click={() => toggleApp(app.id)}>
                                         <Item.Root class={getTileClass(app.id)}>
                                             <div class="text-3xl mb-2">
-                                                <img src={app.icon} alt={app.name + ' icon'} class="h-12 w-12" />
+                                                <img src={app.icon} alt={app.name + ' icon'} class="h-12 w-12 rounded-lg" />
                                             </div>
                                             <div class="font-medium">{app.name}</div>
                                             {#if selectedApps[app.id]}
