@@ -86,32 +86,32 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
                 <Label for="name" class="text-sm font-medium">Your name</Label>
-                <Input id="name" type="text" placeholder="Enter your name" />
+                <Input id="name" type="text" placeholder="Enter your name" bind:value={name} />
             </div>
             <div class="space-y-2">
                 <Label for="computer" class="text-sm font-medium">Computer name</Label>
-                <Input id="computer" type="text" placeholder="Enter computer name" />
+                <Input id="computer" type="text" placeholder="Enter computer name" bind:value={computerName} />
             </div>
             </div>
 
             <div class="space-y-2">
                 <Label for="email" class="text-sm font-medium">Email address (optional)</Label>
-                <Input id="email" type="email" placeholder="Enter your email address" />
+                <Input id="email" type="email" placeholder="Enter your email address" bind:value={email} />
             </div>
             
             <div class="space-y-2">
                 <Label for="username" class="text-sm font-medium">Username</Label>
-                <Input id="username" type="text" placeholder="Enter your username" />
+                <Input id="username" type="text" placeholder="Enter your username" bind:value={username} />
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
                 <Label for="password" class="text-sm font-medium">Password</Label>
-                <Input id="password" type="password" placeholder="Enter your password" />
+                <Input id="password" type="password" placeholder="Enter your password" bind:value={password} />
             </div>
             <div class="space-y-2">
                 <Label for="confirm" class="text-sm font-medium">Confirm password</Label>
-                <Input id="confirm" type="password" placeholder="Confirm your password" />
+                <Input id="confirm" type="password" placeholder="Confirm your password" bind:value={confirmPassword} />
             </div>
             </div>
         </Card.Content>
