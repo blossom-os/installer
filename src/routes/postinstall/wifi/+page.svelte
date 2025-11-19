@@ -19,6 +19,29 @@
 	let connecting = false;
 	let currentConnection: string | null = null;
 
+	let isPostinstallMode = false;
+	onMount(async () => {
+		if (window.electron) {
+			try {
+				isPostinstallMode = await window.electron.checkPostinstallMode();
+
+				// Enter fullscreen mode for postinstall
+				if (isPostinstallMode) {
+					// Request fullscreen for the document
+					if (document.documentElement.requestFullscreen) {
+						await document.documentElement.requestFullscreen();
+					} else if ((document.documentElement as any).webkitRequestFullscreen) {
+						await (document.documentElement as any).webkitRequestFullscreen();
+					} else if ((document.documentElement as any).msRequestFullscreen) {
+						await (document.documentElement as any).msRequestFullscreen();
+					}
+				}
+			} catch (error) {
+				console.error('Failed to check postinstall mode or enter fullscreen:', error);
+			}
+		}
+	});
+
 	function handleBack() {
 		goto('/postinstall/welcome');
 	}

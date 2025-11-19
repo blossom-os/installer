@@ -18,6 +18,30 @@
     let error = false;
     let errorMessage = '';
 
+    onMount(async () => {
+		if (window.electron) {
+			try {
+				isPostinstallMode = await window.electron.checkPostinstallMode();
+
+				// Enter fullscreen mode for postinstall
+				if (isPostinstallMode) {
+					// Request fullscreen for the document
+					if (document.documentElement.requestFullscreen) {
+						await document.documentElement.requestFullscreen();
+					} else if ((document.documentElement as any).webkitRequestFullscreen) {
+						await (document.documentElement as any).webkitRequestFullscreen();
+					} else if ((document.documentElement as any).msRequestFullscreen) {
+						await (document.documentElement as any).msRequestFullscreen();
+					}
+				}
+
+                await window.electron.runCommand('sudo systemctl enable --now NetworkManager && sudo systemctl disable NetworkManager-wait-online.service');
+			} catch (error) {
+				console.error('Failed to check postinstall mode or enter fullscreen:', error);
+			}
+		}
+	});
+
     // App categories and apps
     interface App {
         id: string;
@@ -104,6 +128,7 @@
             for (const app of category.apps) {
                 if (selectedApps[app.id]) {
                     if (window.electron) {
+                        await window.electron.runCommand('flatpak update -y');
                         await window.electron.runCommand(`flatpak install -y ${app.flatpak}`);
                     }
                 }

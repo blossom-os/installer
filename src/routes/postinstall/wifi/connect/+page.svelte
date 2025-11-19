@@ -13,8 +13,29 @@
 	let security = '';
 	let error = '';
 	let showError = false;
+	let isPostinstallMode = false;
 
-	onMount(() => {
+	onMount(async () => {
+		if (window.electron) {
+			try {
+				isPostinstallMode = await window.electron.checkPostinstallMode();
+
+				// Enter fullscreen mode for postinstall
+				if (isPostinstallMode) {
+					// Request fullscreen for the document
+					if (document.documentElement.requestFullscreen) {
+						await document.documentElement.requestFullscreen();
+					} else if ((document.documentElement as any).webkitRequestFullscreen) {
+						await (document.documentElement as any).webkitRequestFullscreen();
+					} else if ((document.documentElement as any).msRequestFullscreen) {
+						await (document.documentElement as any).msRequestFullscreen();
+					}
+				}
+			} catch (error) {
+				console.error('Failed to check postinstall mode or enter fullscreen:', error);
+			}
+		}
+
 		// Get network details from URL params
 		ssid = $page.url.searchParams.get('ssid') || '';
 		security = $page.url.searchParams.get('security') || '';
