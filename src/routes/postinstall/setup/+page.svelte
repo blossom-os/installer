@@ -8,6 +8,16 @@
 
 	let isPostinstallMode = false;
 
+    let name = '';
+    let computerName = '';
+    let email = '';
+    let username = '';
+    let password = '';
+    let confirmPassword = '';
+
+    let error = false;
+    let errorMessage = '';
+
 	onMount(async () => {
 		if (window.electron) {
 			try {
@@ -29,6 +39,28 @@
 			}
 		}
 	});
+
+	function handleContinue() {
+        if (password !== confirmPassword) {
+            error = true;
+            errorMessage = "Passwords do not match.";
+            return;
+        }
+        if (window.electron) {
+            window.electron.setupUserAccount({
+                name,
+                computerName,
+                email,
+                username,
+                password
+            }).then(() => {
+                goto('/postinstall/finish');
+            }).catch((err: Error) => {
+                error = true;
+                errorMessage = err.message;
+            });
+        }
+	}
 </script>
 
 <main class="bg-background h-screen flex items-center justify-center p-8">
@@ -38,6 +70,14 @@
             <Card.Description>This account is a local account. It is not connected to any online services.</Card.Description>
         </Card.Header>
         <Card.Content class="space-y-6">
+            {#if error}
+                <div class="space-y-3">
+                    <p class="text-sm text-red-600 dark:text-red-400">
+                        ✗ {errorMessage}
+                    </p>
+                </div>
+            {/if}
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
                 <Label for="name" class="text-sm font-medium">Your name</Label>
@@ -71,7 +111,7 @@
             </div>
         </Card.Content>
         <Card.Footer class="flex justify-end">
-            <Button>Continue</Button>
+            <Button onclick={handleContinue}>Finish Setup</Button>
         </Card.Footer>
     </Card.Root>
 </main>

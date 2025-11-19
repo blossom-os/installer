@@ -86,6 +86,9 @@ contextBridge.exposeInMainWorld('electron', {
 			console.error('Failed to load translations:', error);
 			throw error;
 		}
+	},
+	setupUserAccount: (userData) => {
+		return ipcRenderer.invoke('setup-user-account', userData);
 	}
 });
 

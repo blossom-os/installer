@@ -1157,3 +1157,46 @@ async function getLastPartitionNumber(diskPath) {
 		throw new Error(`Failed to get partition number: ${error.stderr || error.message}`);
 	}
 }
+
+ipcMain.handle('setup-user-account', async (event, userData) => {
+	return new Promise(async (resolve, reject) => {
+		try {
+			const { name, computerName, email, username, password } = userData;
+			log(`Setting up user account: ${username}`);
+			await execPromiseWithSudo(`useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`);
+			if (password && password.length > 0) {
+				await execPromiseWithSudo(`echo '${username}:${password}' | chpasswd`);
+			} else {
+				await execPromiseWithSudo(`passwd -d ${username}`);
+			}
+			await execPromiseWithSudo(`echo '${computerName}' | tee /etc/hostname`);
+
+			await execPromiseWithSudo(`bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`);
+
+			await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
+
+			// Create systemd service to delete liveuser and installer after first boot once
+			const serviceContent = `[Unit]
+Description=Remove liveuser and installer after first boot
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'userdel -r liveuser; rm -rf /opt/blossomos-installer; rm -rf /home/liveuser; systemctl disable remove-liveuser.service; rm /etc/systemd/system/remove-liveuser.service'
+
+[Install]
+WantedBy=multi-user.target`;
+
+			await execPromise(`echo -e '${serviceContent}' | sudo tee /etc/systemd/system/remove-liveuser.service`);
+			await execPromiseWithSudo(`systemctl enable remove-liveuser.service`);
+
+			log('User account setup completed successfully');
+			resolve({ success: true });
+
+			await execPromiseWithSudo(`reboot`);
+		} catch (error) {
+			logError('User account setup error:', error);
+			reject({ error: error.message });
+		}
+	});
+});
