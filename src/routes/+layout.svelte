@@ -28,11 +28,21 @@
 			<slot />
 		</div>
 	{:else if pageRoute === '/intro'}
+		<style>
+			body {
+				overflow: hidden;
+			}
+		</style>
 		<!-- Fullscreen layout for intro -->
 		<div class="min-h-screen bg-background">
 			<slot />
 		</div>
 	{:else}
+		<style>
+			body {
+				overflow: hidden;
+			}
+		</style>
 		<!-- Card layout for all other pages -->
 		<Card.Root>
 			<Card.Content>
