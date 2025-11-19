@@ -100,63 +100,67 @@
 </script>
 
 <main class="bg-background h-screen flex items-center justify-center p-8">
-	<Card.Header class="mt-4">
-		<div class="flex items-center gap-4">
-			<div>
-				<Card.Title>Connect to {ssid}</Card.Title>
-				<Card.Description class="mt-2 text-muted-foreground">
-					Enter the password for this {getSecurityText(security)} network.
-				</Card.Description>
-			</div>
-		</div>
-	</Card.Header>
-
-	<Card.Content class="mt-6">
-		<div class="space-y-4">
-			{#if showError}
-				<div class="p-3 bg-red-50 border border-red-200 rounded-lg">
-					<div class="flex items-center gap-2">
-						<div class="w-2 h-2 bg-red-500 rounded-full"></div>
-						<span class="text-sm font-medium text-red-700">{error}</span>
+	<Card.Root>
+		<Card.Content>
+			<Card.Header class="mt-4">
+				<div class="flex items-center gap-4">
+					<div>
+						<Card.Title>Connect to {ssid}</Card.Title>
+						<Card.Description class="mt-2 text-muted-foreground">
+							Enter the password for this {getSecurityText(security)} network.
+						</Card.Description>
 					</div>
 				</div>
-			{/if}
+			</Card.Header>
 
-			<div>
-				<label
-					for="password"
-					class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-				>
-					Network Password
-				</label>
-				<Input
-					id="password"
-					type="password"
-					bind:value={password}
-					placeholder="Enter network password"
-					class="mt-1"
-					disabled={connecting}
-					onkeydown={(e) => e.key === 'Enter' && connectWithPassword()}
-				/>
-			</div>
-
-			<div class="flex gap-2">
-				<Button variant="outline" onclick={handleBack} disabled={connecting} class="flex-1">
-					Cancel
-				</Button>
-				<Button
-					onclick={connectWithPassword}
-					disabled={!password || connecting}
-					class="flex-1"
-				>
-					{#if connecting}
-						<Spinner class="mr-2" />
-						Connecting...
-					{:else}
-						Connect
+			<Card.Content class="mt-6">
+				<div class="space-y-4">
+					{#if showError}
+						<div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+							<div class="flex items-center gap-2">
+								<div class="w-2 h-2 bg-red-500 rounded-full"></div>
+								<span class="text-sm font-medium text-red-700">{error}</span>
+							</div>
+						</div>
 					{/if}
-				</Button>
-			</div>
-		</div>
-	</Card.Content>
+
+					<div>
+						<label
+							for="password"
+							class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+						>
+							Network Password
+						</label>
+						<Input
+							id="password"
+							type="password"
+							bind:value={password}
+							placeholder="Enter network password"
+							class="mt-1"
+							disabled={connecting}
+							onkeydown={(e) => e.key === 'Enter' && connectWithPassword()}
+						/>
+					</div>
+
+					<div class="flex gap-2">
+						<Button variant="outline" onclick={handleBack} disabled={connecting} class="flex-1">
+							Cancel
+						</Button>
+						<Button
+							onclick={connectWithPassword}
+							disabled={!password || connecting}
+							class="flex-1"
+						>
+							{#if connecting}
+								<Spinner class="mr-2" />
+								Connecting...
+							{:else}
+								Connect
+							{/if}
+						</Button>
+					</div>
+				</div>
+			</Card.Content>
+		</Card.Content>
+	</Card.Root>
 </main>
