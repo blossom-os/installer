@@ -169,7 +169,7 @@
                     </div>
                 {:else}
                     {#each appCategories as category}
-                        <div>
+                        <div class="max-h-[400px] overflow-y-auto">
                             <h3 class="font-semibold mb-2">{category.name}</h3>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {#each category.apps as app}
