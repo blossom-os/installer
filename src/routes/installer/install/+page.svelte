@@ -259,8 +259,11 @@
 				handleInstallationProgress(data);
 			});
 
+			const selectedKeyboard =
+				localStorage.getItem('installer-keyboard') || 'us';
+
 			// Start the real installation
-			const result = await window.electron.installSystem(selectedDisk);
+			const result = await window.electron.installSystem(selectedDisk, selectedKeyboard);
 
 			if (result.success) {
 				isComplete = true;

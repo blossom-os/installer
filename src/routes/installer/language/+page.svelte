@@ -92,6 +92,8 @@
 			// Save language and keyboard settings
 			setLanguage(selectedLanguage);
 			setKeyboard(selectedKeyboard);
+			localStorage.setItem('installer-language', selectedLanguage);
+			localStorage.setItem('installer-keyboard', selectedKeyboard);
 
 			// Also save via installer API if available
 			if (typeof window !== 'undefined' && (window as any).installer) {

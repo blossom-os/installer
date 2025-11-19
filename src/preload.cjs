@@ -51,8 +51,8 @@ contextBridge.exposeInMainWorld('electron', {
 	detectNvidia: () => {
 		return ipcRenderer.invoke('detect-nvidia');
 	},
-	installSystem: (diskPath) => {
-		return ipcRenderer.invoke('install-system', diskPath);
+	installSystem: (diskPath, keyboard) => {
+		return ipcRenderer.invoke('install-system', diskPath, keyboard);
 	},
 	onInstallationProgress: (callback) => {
 		ipcRenderer.on('installation-progress', (event, data) => callback(data));

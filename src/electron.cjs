@@ -582,7 +582,7 @@ ipcMain.handle('get-installer-settings', async (event) => {
 });
 
 // Install blossomOS
-ipcMain.handle('install-system', async (event, diskPath) => {
+ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			log(`Starting installation on ${diskPath}`);
@@ -657,9 +657,9 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 
 			// Use saved installer settings for configuration
 			log(
-				`Using installer settings - Language: ${installerSettings.language}, Locale: ${installerSettings.locale}, Keyboard: ${installerSettings.keyboard}, Timezone: ${timezone}`,
+				`Using installer settings - Language: ${installerSettings.language}, Locale: ${installerSettings.locale}, Keyboard: ${keyboard}, Timezone: ${timezone}`,
 			);
-			await configureSystem(installerSettings.locale, installerSettings.keyboard, timezone);
+			await configureSystem(installerSettings.locale, keyboard, timezone);
 
 			// Step 6: Install bootloader
 			event.sender.send('installation-progress', { step: 'bootloader', progress: 85 });
@@ -673,8 +673,24 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			// Step 7: Copy blossomOS files
 			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
 			log('Copying blossomOS files...');
-			await copyBlossomFiles();
-			await createPacmanHook();
+			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue`);
+			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release`);
+			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd`);
+			
+			// Create hooks directory
+			await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
+
+			// Create hook to preserve blossomOS files
+			const hookContent = `[Trigger]\nOperation = Install\nOperation = Upgrade\nType = Package\nTarget = filesystem\n\n[Action]\nDescription = Preserving blossomOS branding files...\nWhen = PostTransaction\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
+
+			await execPromise(
+				`echo -e '${hookContent}' | sudo tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`,
+			);
+
+			// Backup original files
+			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue.blossom`);
+			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
+			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
 
 			// Step 8: Cleanup
 			event.sender.send('installation-progress', { step: 'cleanup', progress: 100 });
@@ -1172,30 +1188,6 @@ async function installGRUB(diskPath) {
 	await execPromiseWithSudo(`arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg`);
 }
 
-async function copyBlossomFiles() {
-	// Copy blossomOS branding files
-	await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue`);
-	await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release`);
-	await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd`);
-}
-
-async function createPacmanHook() {
-	// Create hooks directory
-	await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
-
-	// Create hook to preserve blossomOS files
-	const hookContent = `[Trigger]\nOperation = Install\nOperation = Upgrade\nType = Package\nTarget = filesystem\n\n[Action]\nDescription = Preserving blossomOS branding files...\nWhen = PostTransaction\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
-
-	await execPromise(
-		`echo -e '${hookContent}' | sudo tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`,
-	);
-
-	// Backup original files
-	await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue.blossom`);
-	await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
-	await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
-}
-
 async function cleanupMounts() {
 	// Unmount all partitions
 	await execPromiseWithSudo(`umount -R /mnt`).catch(() => {});
@@ -1221,51 +1213,75 @@ async function getLastPartitionNumber(diskPath) {
 }
 
 ipcMain.handle(
-	'setup-user-account',
-	async (event, name, computerName, email, username, password) => {
-		return new Promise(async (resolve, reject) => {
-			try {
-				log(`Setting up user account: ${username}`);
-				await execPromiseWithSudo(
-					`useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`,
-				);
-				if (password && password.length > 0) {
-					await execPromise(`echo '${username}:${password}' | sudo chpasswd`);
-				} else {
-					await execPromiseWithSudo(`passwd -d ${username}`);
-				}
-				await execPromise(`echo '${computerName}' | sudo tee /etc/hostname`);
+  'setup-user-account',
+  async (event, name, computerName, email, username, password) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        log(`Setting up user account: ${username}`);
 
-				await execPromiseWithSudo(`bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`);
+        await execPromiseWithSudo(
+          `useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`
+        );
 
-				await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
-				// Create systemd service to delete liveuser and installer after first boot once
-				const serviceContent = `[Unit]
+        if (password && password.length > 0) {
+          await execPromiseWithSudo(
+            `echo '${username}:${password}' | chpasswd`
+          );
+        } else {
+          await execPromiseWithSudo(`passwd -d ${username}`);
+        }
+
+        await execPromiseWithSudo(`echo '${computerName}' | tee /etc/hostname`);
+
+        await execPromiseWithSudo(
+          `bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`
+        );
+
+        await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
+
+        const removeScript = `#!/bin/bash
+set -e
+userdel -r liveuser || true
+rm -rf /opt/blossomos-installer || true
+rm -rf /home/liveuser || true
+systemctl disable remove-liveuser.service || true
+rm -f /etc/systemd/system/remove-liveuser.service || true
+`;
+        await execPromiseWithSudo(
+          `tee /usr/local/bin/remove-liveuser.sh <<'EOF'\n${removeScript}\nEOF`
+        );
+        await execPromiseWithSudo(`chmod +x /usr/local/bin/remove-liveuser.sh`);
+
+        const serviceContent = `[Unit]
 Description=Remove liveuser and installer after first boot
 After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c 'userdel -r liveuser; rm -rf /opt/blossomos-installer; rm -rf /home/liveuser; systemctl disable remove-liveuser.service; rm /etc/systemd/system/remove-liveuser.service'
+ExecStart=/usr/local/bin/remove-liveuser.sh
+RemainAfterExit=true
 
 [Install]
-WantedBy=multi-user.target`;
+WantedBy=multi-user.target
+`;
+        await execPromiseWithSudo(
+          `tee /etc/systemd/system/remove-liveuser.service <<'EOF'\n${serviceContent}\nEOF`
+        );
 
-				await execPromise(
-					`echo -e '${serviceContent}' | sudo tee /etc/systemd/system/remove-liveuser.service`,
-				);
-				await execPromiseWithSudo(`systemctl enable remove-liveuser.service`);
+        await execPromiseWithSudo(`systemctl unmask remove-liveuser.service || true`);
+        await execPromiseWithSudo(`systemctl daemon-reload`);
+        await execPromiseWithSudo(`systemctl enable remove-liveuser.service`);
 
-				await execPromiseWithSudo(`rm -f /etc/sddm.conf.d/autologin.conf`);
+        await execPromiseWithSudo(`rm -f /etc/sddm.conf.d/autologin.conf`);
 
-				log('User account setup completed successfully');
-				resolve({ success: true });
+        log('User account setup completed successfully');
+        resolve({ success: true });
 
-				await execPromiseWithSudo(`reboot`);
-			} catch (error) {
-				logError('User account setup error:', error);
-				reject({ error: error.message });
-			}
-		});
-	},
+        await execPromiseWithSudo(`reboot`);
+      } catch (error) {
+        logError('User account setup error:', error);
+        reject({ error: error.message });
+      }
+    });
+  }
 );
