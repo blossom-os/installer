@@ -1162,7 +1162,7 @@ async function getLastPartitionNumber(diskPath) {
 	}
 }
 
-ipcMain.handle('setup-user-account', async (event, userData) => {
+ipcMain.handle('setup-user-account', async (userData) => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const { name, computerName, email, username, password } = userData;
