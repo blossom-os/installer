@@ -1230,15 +1230,13 @@ ipcMain.handle(
 					`useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`,
 				);
 				if (password && password.length > 0) {
-					await execPromiseWithSudo(`echo '${username}:${password}' | chpasswd`);
+					await execPromise(`echo '${username}:${password}' | sudo chpasswd`);
 				} else {
 					await execPromiseWithSudo(`passwd -d ${username}`);
 				}
 				await execPromise(`echo '${computerName}' | sudo tee /etc/hostname`);
 
-				await execPromiseWithSudo(
-					`bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`,
-				);
+				await execPromiseWithSudo(`bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`);
 
 				await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
 				// Create systemd service to delete liveuser and installer after first boot once
