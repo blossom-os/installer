@@ -676,12 +676,13 @@ ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
 			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue`);
 			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release`);
 			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd`);
+			await execPromiseWithSudo(`cp /opt/blossomos-installer/static/logo.svg /mnt/usr/share/pixmaps/archlinux-logo.svg`);
 
 			// Create hooks directory
 			await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
 
 			// Create hook to preserve blossomOS files
-			const hookContent = `[Trigger]\nOperation = Install\nOperation = Upgrade\nType = Package\nTarget = filesystem\n\n[Action]\nDescription = Preserving blossomOS branding files...\nWhen = PostTransaction\nExec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true'`;
+			const hookContent = `[Trigger] Operation = Install Operation = Upgrade Type = Package Target = filesystem [Action] Description = Preserving blossomOS branding files... When = PostTransaction Exec = /bin/bash -c 'cp /etc/issue.blossom /etc/issue 2>/dev/null || true; cp /etc/os-release.blossom /etc/os-release 2>/dev/null || true; cp /etc/motd.blossom /etc/motd 2>/dev/null || true; cp /usr/share/pixmaps/archlinux-logo.svg.blossom /usr/share/pixmaps/archlinux-logo.svg 2>/dev/null || true'`;
 
 			await execPromise(
 				`echo -e '${hookContent}' | sudo tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`,
@@ -691,6 +692,7 @@ ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
 			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue.blossom`);
 			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
 			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
+			await execPromiseWithSudo(`cp /opt/blossomos-installer/static/logo.svg /mnt/usr/share/pixmaps/archlinux-logo.svg.blossom`);
 
 			// Create snapshot
 			log('Creating initial BTRFS snapshot...');
