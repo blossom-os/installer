@@ -698,7 +698,7 @@ ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
 			log('Creating initial BTRFS snapshot...');
 			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
 			await execPromiseWithSudo(
-				`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`,
+				`arch-chroot /mnt bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`,
 			);
 
 			// Step 8: Cleanup
