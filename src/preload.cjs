@@ -145,12 +145,6 @@ contextBridge.exposeInMainWorld('installer', {
 		}
 		return Promise.resolve('us');
 	},
-	setKeyboard: (keyboardCode) => {
-		if (typeof localStorage !== 'undefined') {
-			localStorage.setItem('installer-keyboard', keyboardCode);
-		}
-		return Promise.resolve(keyboardCode);
-	},
 	getLanguage: () => {
 		if (typeof localStorage !== 'undefined') {
 			return Promise.resolve(localStorage.getItem('installer-language') || 'en');
