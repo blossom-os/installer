@@ -671,12 +671,12 @@ ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
 			}
 
 			// Step 7: Copy blossomOS files
-			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
+			event.sender.send('installation-progress', { step: 'finalize', progress: 90 });
 			log('Copying blossomOS files...');
 			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue`);
 			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release`);
 			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd`);
-			
+
 			// Create hooks directory
 			await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
 
@@ -691,6 +691,13 @@ ipcMain.handle('install-system', async (event, diskPath, keyboard) => {
 			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue.blossom`);
 			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
 			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
+
+			// Create snapshot
+			log('Creating initial BTRFS snapshot...');
+			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
+			await execPromiseWithSudo(
+				`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`,
+			);
 
 			// Step 8: Cleanup
 			event.sender.send('installation-progress', { step: 'cleanup', progress: 100 });
@@ -1045,10 +1052,6 @@ async function installMinimalKDEChroot(rootPartition) {
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/timeshift"`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "echo '{\\\"backup_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"parent_device_uuid\\\" : \\\"${backupUUID}\\\", \\\"do_first_run\\\" : \\\"false\\\", \\\"btrfs_mode\\\" : \\\"true\\\", \\\"include_btrfs_home_for_backup\\\" : \\\"true\\\", \\\"include_btrfs_home_for_restore\\\" : \\\"false\\\", \\\"stop_cron_emails\\\" : \\\"true\\\", \\\"schedule_monthly\\\" : \\\"false\\\", \\\"schedule_weekly\\\" : \\\"false\\\", \\\"schedule_daily\\\" : \\\"true\\\", \\\"schedule_hourly\\\" : \\\"true\\\", \\\"schedule_boot\\\" : \\\"true\\\", \\\"count_monthly\\\" : \\\"2\\\", \\\"count_weekly\\\" : \\\"3\\\", \\\"count_daily\\\" : \\\"5\\\", \\\"count_hourly\\\" : \\\"6\\\", \\\"count_boot\\\" : \\\"5\\\", \\\"date_format\\\" : \\\"%Y-%m-%d %H:%M:%S\\\", \\\"exclude\\\" : [], \\\"exclude-apps\\\" : [] }' > /etc/timeshift/timeshift.json"`,
-	);
-
-	await execPromiseWithSudo(
-		`${CHROOT} bash -c "timeshift --create --comments 'Initial Snapshot' --tags D"`,
 	);
 
 	log('Minimal KDE installation in chroot completed.');
