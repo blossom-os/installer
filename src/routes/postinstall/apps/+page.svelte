@@ -142,7 +142,7 @@
 </script>
 
 <main class="bg-background p-8">
-    <Card.Root class="w-4xl mx-auto my-8">
+    <Card.Root class="w-4xl mx-auto my-16">
         <Card.Header>
             <Card.Title>Install your favourite apps</Card.Title>
             <Card.Description>
@@ -155,7 +155,7 @@
                 <div class="text-lg text-muted-foreground">Installing selected apps…</div>
             </Card.Content>
         {:else}
-            <Card.Content class="space-y-8">
+            <Card.Content class="space-y-6">
                 {#if error}
                     <div class="space-y-3">
                         <p class="text-sm text-red-600 dark:text-red-400">
