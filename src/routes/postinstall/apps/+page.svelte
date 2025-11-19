@@ -140,8 +140,8 @@
     }
 </script>
 
-<main class="bg-background h-screen flex items-center justify-center p-8">
-    <Card.Root class="w-3xl mx-auto my-16">
+<main class="bg-background p-8">
+    <Card.Root class="w-4xl mx-auto my-16">
         <Card.Header>
             <Card.Title>Install your favourite apps</Card.Title>
             <Card.Description>
