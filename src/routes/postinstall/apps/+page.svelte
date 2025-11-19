@@ -35,6 +35,7 @@
 					}
 				}
 
+                await window.electron.runCommand(`kwriteconfig6 --file kcm_touchpad --group "Touchpad" --key "NaturalScrolling" "true"`);
                 await window.electron.runCommand('sudo systemctl enable --now NetworkManager && sudo systemctl disable NetworkManager-wait-online.service');
 			} catch (error) {
 				console.error('Failed to check postinstall mode or enter fullscreen:', error);
