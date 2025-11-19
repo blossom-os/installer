@@ -244,6 +244,10 @@ ipcMain.handle('run-command', (event, command) => {
 	});
 });
 
+ipcMain.handle('run-command-async', async (event, command) => {
+	return execPromise(command);
+});
+
 // WiFi scanning handler
 ipcMain.handle('scan-wifi', async (event) => {
 	return new Promise((resolve, reject) => {

@@ -16,6 +16,10 @@ contextBridge.exposeInMainWorld('electron', {
 	runCommand: (command) => {
 		return ipcRenderer.invoke('run-command', command);
 	},
+	runCommandAsync: (command) => {
+		return ipcRenderer.invoke('run-command-async', command);
+	},
+	// WiFi functions
 	scanWifi: () => {
 		return ipcRenderer.invoke('scan-wifi');
 	},

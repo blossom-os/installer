@@ -125,19 +125,17 @@
 
     async function handleContinue() {
         isInstalling = true;
-        for (const category of appCategories) {
-            for (const app of category.apps) {
-                if (selectedApps[app.id]) {
-                    if (window.electron) {
-                        await window.electron.runCommand('flatpak update -y');
-                        await window.electron.runCommand(`flatpak install -y ${app.flatpak}`);
+        if (window.electron) {
+            await window.electron.runCommandAsync('flatpak update -y');
+            for (const category of appCategories) {
+                for (const app of category.apps) {
+                    if (selectedApps[app.id]) {
+                        await window.electron.runCommandAsync(`flatpak install -y ${app.flatpak}`);
                     }
                 }
             }
         }
-        setTimeout(() => {
-            goto('/postinstall/setup');
-        }, 1200);
+        goto('/postinstall/setup');
     }
 </script>
 
