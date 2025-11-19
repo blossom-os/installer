@@ -196,7 +196,7 @@
                 {/if}
             </Card.Content>
             <Card.Footer class="flex justify-end gap-2">
-                <Button variant="outline" onclick={() => goto('/postinstall/finish')}>Skip</Button>
+                <Button variant="outline" onclick={() => goto('/postinstall/setup')}>Skip</Button>
                 <div class="flex-1"></div>
                 <Button onclick={handleContinue}>Install Selected Apps</Button>
             </Card.Footer>
