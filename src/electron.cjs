@@ -1162,7 +1162,7 @@ async function getLastPartitionNumber(diskPath) {
 	}
 }
 
-ipcMain.handle('setup-user-account', async (userData) => {
+ipcMain.handle('setup-user-account', async (event, userData) => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const { name, computerName, email, username, password } = userData;
@@ -1173,7 +1173,7 @@ ipcMain.handle('setup-user-account', async (userData) => {
 			} else {
 				await execPromiseWithSudo(`passwd -d ${username}`);
 			}
-			await execPromiseWithSudo(`echo '${computerName}' | tee /etc/hostname`);
+			await execPromise(`echo '${computerName}' | sudo tee /etc/hostname`);
 
 			await execPromiseWithSudo(`bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`);
 
