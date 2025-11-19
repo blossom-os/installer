@@ -182,19 +182,25 @@
                         </div>
                     </div>
                 {:else}
+                <div class="max-h-[400px] overflow-y-auto p-4">
                     {#each appCategories as category}
-                        <div class="max-h-[400px] overflow-y-auto">
+                    <div class="my-4">
                             <h3 class="font-semibold mb-2">{category.name}</h3>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {#each category.apps as app}
                                     <button type="button" class="w-full" aria-pressed={selectedApps[app.id]} aria-label={app.name} on:click={() => toggleApp(app.id)}>
                                         <Item.Root class={getTileClass(app.id)}>
+                                            {#if !selectedApps[app.id]}
+                                                <div class="mt-2 text-primary" style="visibility:hidden;"></div>
+                                            {/if}
                                             <div class="text-3xl mb-2">
                                                 <img src={app.icon} alt={app.name + ' icon'} class="h-12 w-12 rounded-lg" />
                                             </div>
                                             <div class="font-medium">{app.name}</div>
                                             {#if selectedApps[app.id]}
                                                 <div class="mt-2 text-primary">✓ Selected</div>
+                                            {:else}
+                                                <div class="mt-2 text-primary" style="visibility:hidden;"></div>
                                             {/if}
                                         </Item.Root>
                                     </button>
@@ -202,6 +208,7 @@
                             </div>
                         </div>
                     {/each}
+                    </div>
                 {/if}
             </Card.Content>
             <Card.Footer class="flex justify-end gap-2">

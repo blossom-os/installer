@@ -22,8 +22,8 @@
 				}
 
                 window.setTimeout(() => {
-                    goto('/postinstall');
-                }, 25000);
+                    goto('/postinstall/welcome');
+                }, 0);
 			} catch (error) {
 				console.error('Failed to check postinstall mode or enter fullscreen:', error);
 			}
