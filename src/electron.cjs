@@ -1298,3 +1298,52 @@ WantedBy=multi-user.target
     });
   }
 );
+
+async function getTouchpads() {
+  const output = await execPromise('libinput list-devices');
+  const devices = [];
+
+  const blocks = output.split('\n\n');
+  for (const block of blocks) {
+    if (!block.toLowerCase().includes('touchpad')) continue;
+
+    const lines = block.split('\n').map(l => l.trim());
+    let name = '';
+    let id = '';
+
+    for (const line of lines) {
+      if (line.startsWith('Device:')) name = line.replace('Device:', '').trim();
+      if (line.startsWith('Id:')) id = line.replace('Id:', '').trim();
+    }
+
+    if (name && id) devices.push({ name, id });
+  }
+
+  return devices;
+}
+
+async function setNaturalScroll(enable) {
+  const devices = await getTouchpads();
+
+  if (devices.length === 0) {
+    await execPromise(
+      `kwriteconfig6 --file kcminputrc --group Touchpad --key NaturalScroll ${enable ? 'true' : 'false'}`
+    );
+  } else {
+    for (const dev of devices) {
+      const [vendor, product] = dev.id.split(':');
+      const block = `[Libinput][${parseInt(vendor, 16)}][${parseInt(product, 16)}][${dev.name}]`;
+      await execPromise(
+        `kwriteconfig6 --file kcminputrc --group "${block}" --key NaturalScroll ${enable ? 'true' : 'false'}`
+      );
+    }
+  }
+
+  await execPromise('qdbus org.kde.KWin /KWin reconfigure');
+
+  resolve({ success: true });
+}
+
+ipcMain.handle('set-natural-scroll', async (event, enable) => {
+  return await setNaturalScroll(enable);
+});
