@@ -951,7 +951,12 @@ async function installMinimalKDEChroot(rootPartition) {
 
 	// Minimal KDE packages
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-desktop sddm flatpak unzip"`,
+		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak"`,
+	);
+
+	// Debloat Plasma
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta"`,
 	);
 
 	// User setup
@@ -1004,6 +1009,9 @@ async function installMinimalKDEChroot(rootPartition) {
 	await execPromiseWithSudo(`${CHROOT} systemctl enable cups cups-browsed avahi-daemon`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "sed -i '/^hosts:/ s/mymachines resolve \\[!UNAVAIL=return\\] files myhostname dns/mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns/' /etc/nsswitch.conf"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed kdeconnect skanpage qt6-tools sshfs"`,
 	);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`,
