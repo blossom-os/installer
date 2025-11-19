@@ -145,18 +145,6 @@ contextBridge.exposeInMainWorld('installer', {
 		}
 		return Promise.resolve('us');
 	},
-	getLanguage: () => {
-		if (typeof localStorage !== 'undefined') {
-			return Promise.resolve(localStorage.getItem('installer-language') || 'en');
-		}
-		return Promise.resolve('en');
-	},
-	getKeyboard: () => {
-		if (typeof localStorage !== 'undefined') {
-			return Promise.resolve(localStorage.getItem('installer-keyboard') || 'us');
-		}
-		return Promise.resolve('us');
-	},
 	loadTranslations: async (languageCode) => {
 		try {
 			const response = await fetch(`/locales/${languageCode}.json`);
