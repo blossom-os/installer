@@ -37,6 +37,15 @@
 
                 await window.electron.runCommand(`kwriteconfig6 --file kcm_touchpad --group "Touchpad" --key "NaturalScrolling" "true"`);
                 await window.electron.runCommand('sudo systemctl enable --now NetworkManager && sudo systemctl disable NetworkManager-wait-online.service');
+
+                fetch("https://api.github.com/")
+                    .then(() => {
+                        // Connected to the internet
+                    })
+                    .catch(() => {
+                        error = true;
+                        errorMessage = "Unable to reach servers. Please check your internet connection.";
+                    });
 			} catch (error) {
 				console.error('Failed to check postinstall mode or enter fullscreen:', error);
 			}
