@@ -92,7 +92,7 @@
             key: 'music',
             apps: [
                 { id: 'spotify', name: 'Spotify', icon: '/apps/spotify.svg', flatpak: 'com.spotify.Client', selected: false },
-                { id: 'tidal', name: 'Tidal Hi-Fi', icon: '/apps/tidal.svg', flatpak: 'com.tidal-hifi.TidalHiFi', selected: false },
+                { id: 'tidal', name: 'Tidal Hi-Fi', icon: '/apps/tidal.svg', flatpak: 'com.mastermindzh.tidal-hifi', selected: false },
                 { id: 'vlc', name: 'VLC', icon: '/apps/vlc.svg', flatpak: 'org.videolan.VLC', selected: true },
             ],
         },
