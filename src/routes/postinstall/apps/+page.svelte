@@ -130,7 +130,7 @@
             for (const category of appCategories) {
                 for (const app of category.apps) {
                     if (selectedApps[app.id]) {
-                        await window.electron.runCommandAsync(`flatpak install -y ${app.flatpak}`);
+                        await window.electron.runCommandAsync(`flatpak install -y flathub ${app.flatpak}`);
                     }
                 }
             }
