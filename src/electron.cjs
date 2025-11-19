@@ -1165,20 +1165,18 @@ async function getLastPartitionNumber(diskPath) {
 ipcMain.handle('setup-user-account', async (event, userData) => {
 	return new Promise(async (resolve, reject) => {
 		try {
-			const { name, computerName, email, username, password } = userData;
-			log(`Setting up user account: ${username}`);
-			await execPromiseWithSudo(`useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`);
-			if (password && password.length > 0) {
-				await execPromiseWithSudo(`echo '${username}:${password}' | chpasswd`);
+			log(`Setting up user account: ${userData.username}`);
+			await execPromiseWithSudo(`useradd -m -G wheel,audio,video,optical,storage,power,network ${userData.username}`);
+			if (userData.password && userData.password.length > 0) {
+				await execPromiseWithSudo(`echo '${userData.username}:${userData.password}' | chpasswd`);
 			} else {
-				await execPromiseWithSudo(`passwd -d ${username}`);
+				await execPromiseWithSudo(`passwd -d ${userData.username}`);
 			}
-			await execPromise(`echo '${computerName}' | sudo tee /etc/hostname`);
+			await execPromise(`echo '${userData.computerName}' | sudo tee /etc/hostname`);
 
-			await execPromiseWithSudo(`bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`);
+			await execPromiseWithSudo(`bash -c "sed -i 's/^Email=.*/Email=${userData.email}/' /var/lib/AccountsService/users/${userData.username} || echo 'Email=${userData.email}' >> /var/lib/AccountsService/users/${userData.username}"`);
 
-			await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
-
+			await execPromiseWithSudo(`chfn -f "${userData.name}" ${userData.username}`);
 			// Create systemd service to delete liveuser and installer after first boot once
 			const serviceContent = `[Unit]
 Description=Remove liveuser and installer after first boot
