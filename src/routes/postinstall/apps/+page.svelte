@@ -1,4 +1,7 @@
 <script lang="ts">
+    import Spinner from '$lib/components/ui/spinner/spinner.svelte';
+
+    let isInstalling = false;
     function getTileClass(appId: string) {
         return [
             'p-4 border rounded-lg flex flex-col items-center justify-center transition-all duration-150',
@@ -88,20 +91,27 @@
                 window.electron.runCommand('flatpak uninstall -y org.mozilla.firefox');
             }
         }
+        if (appId === 'vlc' && !selectedApps[appId]) {
+            if (window.electron) {
+                window.electron.runCommand('flatpak uninstall -y org.videolan.VLC');
+            }
+        }
     }
 
-    function handleContinue() {
-        // Install selected apps
+    async function handleContinue() {
+        isInstalling = true;
         for (const category of appCategories) {
             for (const app of category.apps) {
                 if (selectedApps[app.id]) {
                     if (window.electron) {
-                        window.electron.runCommand(`flatpak install -y ${app.flatpak}`);
+                        await window.electron.runCommand(`flatpak install -y ${app.flatpak}`);
                     }
                 }
             }
         }
-        goto('/postinstall/setup');
+        setTimeout(() => {
+            goto('/postinstall/setup');
+        }, 1200);
     }
 </script>
 
@@ -113,41 +123,48 @@
                 You can install additional applications now or skip this step and install them later.
             </Card.Description>
         </Card.Header>
-        <Card.Content class="space-y-8">
-            {#if error}
-                <div class="space-y-3">
-                    <p class="text-sm text-red-600 dark:text-red-400">
-                        ✗ {errorMessage}
-                    </p>
-                    <div class="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/30 rounded-lg">
-                        <Button size="sm" onclick={() => { error = false; errorMessage = ''; goto("/postinstall/wifi"); }}>
-                            Open WiFi manager
-                        </Button>
-                    </div>
-                </div>
-            {:else}
-                {#each appCategories as category}
-                    <div>
-                        <h3 class="font-semibold mb-2">{category.name}</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {#each category.apps as app}
-                                <button type="button" class="w-full" aria-pressed={selectedApps[app.id]} aria-label={app.name} on:click={() => toggleApp(app.id)}>
-                                    <Item.Root class={getTileClass(app.id)}>
-                                        <div class="text-3xl mb-2">{app.icon}</div>
-                                        <div class="font-medium">{app.name}</div>
-                                        {#if selectedApps[app.id]}
-                                            <div class="mt-2 text-primary">✓ Selected</div>
-                                        {/if}
-                                    </Item.Root>
-                                </button>
-                            {/each}
+        {#if isInstalling}
+            <Card.Content class="flex flex-col items-center justify-center py-16">
+                <Spinner class="h-10 w-10 mb-4" />
+                <div class="text-lg text-muted-foreground">Installing selected apps…</div>
+            </Card.Content>
+        {:else}
+            <Card.Content class="space-y-8">
+                {#if error}
+                    <div class="space-y-3">
+                        <p class="text-sm text-red-600 dark:text-red-400">
+                            ✗ {errorMessage}
+                        </p>
+                        <div class="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/30 rounded-lg">
+                            <Button size="sm" onclick={() => { error = false; errorMessage = ''; goto("/postinstall/wifi"); }}>
+                                Open WiFi manager
+                            </Button>
                         </div>
                     </div>
-                {/each}
-            {/if}
-        </Card.Content>
-        <Card.Footer class="flex justify-end gap-2">
-            <Button variant="outline" onclick={() => goto('/postinstall/finish')}>Skip</Button>
-        </Card.Footer>
+                {:else}
+                    {#each appCategories as category}
+                        <div>
+                            <h3 class="font-semibold mb-2">{category.name}</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {#each category.apps as app}
+                                    <button type="button" class="w-full" aria-pressed={selectedApps[app.id]} aria-label={app.name} on:click={() => toggleApp(app.id)}>
+                                        <Item.Root class={getTileClass(app.id)}>
+                                            <div class="text-3xl mb-2">{app.icon}</div>
+                                            <div class="font-medium">{app.name}</div>
+                                            {#if selectedApps[app.id]}
+                                                <div class="mt-2 text-primary">✓ Selected</div>
+                                            {/if}
+                                        </Item.Root>
+                                    </button>
+                                {/each}
+                            </div>
+                        </div>
+                    {/each}
+                {/if}
+            </Card.Content>
+            <Card.Footer class="flex justify-end gap-2">
+                <Button variant="outline" onclick={() => goto('/postinstall/finish')}>Skip</Button>
+            </Card.Footer>
+        {/if}
     </Card.Root>
 </main>

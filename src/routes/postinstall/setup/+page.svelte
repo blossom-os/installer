@@ -5,6 +5,7 @@
     import * as Card from '$lib/components/ui/card/index.js';
     import { Input } from '$lib/components/ui/input';
     import { Label } from '$lib/components/ui/label';
+	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
 
 	let isPostinstallMode = false;
 
@@ -17,6 +18,8 @@
 
     let error = false;
     let errorMessage = '';
+
+    let isLoading = false;
 
 	onMount(async () => {
 		if (window.electron) {
@@ -47,6 +50,7 @@
             return;
         }
         if (window.electron) {
+            isLoading = true;
             window.electron.setupUserAccount({
                 name,
                 computerName,
@@ -56,6 +60,7 @@
             }).then(() => {
                 goto('/postinstall/finish');
             }).catch((err: Error) => {
+                isLoading = false;
                 error = true;
                 errorMessage = err.message;
             });
@@ -111,7 +116,14 @@
             </div>
         </Card.Content>
         <Card.Footer class="flex justify-end">
-            <Button onclick={handleContinue}>Finish Setup</Button>
+            <Button onclick={handleContinue} disabled={isLoading}>
+                {#if isLoading}
+                    <Spinner class="mr-2" />
+                    Setting up...
+                {:else}
+                    Finish Setup
+                {/if}
+            </Button>
         </Card.Footer>
     </Card.Root>
 </main>

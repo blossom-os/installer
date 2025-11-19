@@ -48,7 +48,7 @@
 					<p class="mb-4">Thank you for choosing blossomOS. You can now continue setting up your computer.</p>
 				</Card.Content>
 				<Card.Footer>
-					<Button onclick={() => goto('/postinstall/setup')}>Continue Setup</Button>
+					<Button onclick={() => goto('/postinstall/apps')}>Continue Setup</Button>
 				</Card.Footer>
 			</Card.Root>
 		</div>
