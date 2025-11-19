@@ -23,26 +23,16 @@
 {#if ready}
 	{#if pageRoute?.startsWith('/postinstall')}
 		<!-- Fullscreen layout for postinstall -->
-		 <audio autoplay src="/intro_audio.mp3"></audio>
+		<audio autoplay src="/intro_audio.mp3"></audio>
 		<div class="min-h-screen bg-background">
 			<slot />
 		</div>
 	{:else if pageRoute === '/intro'}
-		<style>
-			body {
-				overflow: hidden;
-			}
-		</style>
 		<!-- Fullscreen layout for intro -->
 		<div class="min-h-screen bg-background">
 			<slot />
 		</div>
 	{:else}
-		<style>
-			body {
-				overflow: hidden;
-			}
-		</style>
 		<!-- Card layout for all other pages -->
 		<Card.Root>
 			<Card.Content>
