@@ -1253,6 +1253,10 @@ ipcMain.handle(
           `bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`
         );
 
+		await execPromiseWithSudo(
+		  `mkdir -p /home/${username}/.config/autostart`
+		);
+
 		const naturalScrollScript = `
 #!/bin/bash
 OUT=$(sudo libinput list-devices)
