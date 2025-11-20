@@ -1256,33 +1256,42 @@ ipcMain.handle(
 		const naturalScrollScript = `
 #!/bin/bash
 OUT=$(sudo libinput list-devices)
-TOUCH_KERNELS=$(echo "$OUT" | awk 'BEGIN{IGNORECASE=1} /^Device:.*touchpad/{touch=1} touch && /^Kernel:/ {print $2; touch=0}')
+
+TOUCH_KERNELS=$(echo "$OUT" | awk '
+    BEGIN{IGNORECASE=1}
+    /^Device:.*touchpad/{touch=1}
+    touch && /^Kernel:/ {print $2; touch=0}
+')
+
 if [ -z "$TOUCH_KERNELS" ]; then
-  exit 1
+    exit 1
 fi
 
 for KERNEL in $TOUCH_KERNELS; do
-  DEVICE_NAME=$(basename "$KERNEL")
-  DBUS_PATH="/org/kde/KWin/InputDevice/$DEVICE_NAME"
-  busctl --user set-property org.kde.KWin "$DBUS_PATH" org.kde.KWin.InputDevice naturalScroll b true
+    DEVICE_NAME=$(basename "$KERNEL")
+    DBUS_PATH="/org/kde/KWin/InputDevice/$DEVICE_NAME"
+
+    busctl --user set-property org.kde.KWin "$DBUS_PATH" org.kde.KWin.InputDevice naturalScroll b true
 done
 `;
 
 		await execPromiseWithSudo(
-		`mkdir -p /home/${username}/.config/autostart && echo "${naturalScrollScript.replace(/"/g, '\\"')}" | sudo tee /home/${username}/.config/autostart/set-natural-scroll.sh && sudo chmod +x /home/${username}/.config/autostart/set-natural-scroll.sh`
+          `tee /home/${username}/.config/autostart/set-natural-scroll.sh <<'EOF'\n${naturalScrollScript}\nEOF`
+        );
+
+		const naturalScrollDesktopFile = `[Desktop Entry]
+Type=Application
+Exec=bash -c '/home/${username}/.config/autostart/set-natural-scroll.sh && rm /home/${username}/.config/autostart/set-natural-scroll.sh /home/${username}/.config/autostart/set-natural-scroll.desktop'
+Hidden=false
+NoDisplay=false
+Name=Set Natural Scroll
+`;
+
+		await execPromiseWithSudo(
+		  `tee /home/${username}/.config/autostart/set-natural-scroll.desktop <<'EOF'\n${naturalScrollDesktopFile}\nEOF`
 		);
 
-		await execPromise(
-			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/set-natural-scroll.sh && rm /home/${username}/.config/autostart/set-natural-scroll.sh /home/${username}/.config/autostart/set-natural-scroll.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Set Natural Scroll\\n' | sudo tee /home/${username}/.config/autostart/set-natural-scroll.desktop`
-		);
-
-		await execPromise(
-			`echo -e 'konsave -i /usr/share/blossomos/theme.knsv\\nkonsave -a theme\\nkquitapp6 plasmashell && plasmashell &!' | sudo tee /home/${username}/.config/autostart/apply-theme.sh && sudo chmod +x /home/${username}/.config/autostart/apply-theme.sh`
-		);
-
-		await execPromise(
-			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/apply-theme.sh && rm /home/${username}/.config/autostart/apply-theme.sh /home/${username}/.config/autostart/apply-theme.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Apply BlossomOS Theme\\n' | sudo tee /home/${username}/.config/autostart/apply-theme.desktop`
-		);
+		await execPromise(`sudo -u ${username} bash -c 'konsave -a theme'`);
 
 		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
 
