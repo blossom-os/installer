@@ -964,7 +964,7 @@ async function installMinimalKDEChroot(rootPartition) {
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`,
 	);
-	await execPromiseWithSudo(`${CHROOT} bash -c "cp /etc/skel/.bashrc /home/${USER}/.bashrc"`);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cp -ra /etc/skel/. /home/${USER}/"`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "passwd -d ${USER}"`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`,
