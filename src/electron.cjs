@@ -1295,9 +1295,9 @@ Name=Set Natural Scroll
 		  `tee /home/${username}/.config/autostart/set-natural-scroll.desktop <<'EOF'\n${naturalScrollDesktopFile}\nEOF`
 		);
 
-		await execPromise(`sudo -u ${username} bash -c 'konsave -a theme'`);
-
 		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
+
+		await execPromise(`sudo -u ${username} bash -c 'konsave -a theme'`);
 
         await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
 
