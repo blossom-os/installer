@@ -1237,7 +1237,6 @@ ipcMain.handle(
           `useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`
         );
 		await execPromiseWithSudo(`cp /etc/skel/.bashrc /home/${username}/.bashrc`);
-		await execPromiseWithSudo(`chown ${username}:${username} /home/${username}/.bashrc`);
 
         if (password && password.length > 0) {
           await execPromise(
@@ -1252,6 +1251,16 @@ ipcMain.handle(
         await execPromiseWithSudo(
           `bash -c "sed -i 's/^Email=.*/Email=${email}/' /var/lib/AccountsService/users/${username} || echo 'Email=${email}' >> /var/lib/AccountsService/users/${username}"`
         );
+
+		await execPromiseWithSudo(
+			`echo "OUT=\$(sudo libinput list-devices); TOUCH_KERNELS=\$(echo \\"\\$OUT\\" | awk 'BEGIN{IGNORECASE=1} /^Device:.*touchpad/{touch=1} touch && /^Kernel:/ {print \\$2; touch=0}'); if [ -z \\"\\$TOUCH_KERNELS\\" ]; then exit 1; fi; for KERNEL in \\$TOUCH_KERNELS; do DEVICE_NAME=\$(basename \\"\\$KERNEL\\"); DBUS_PATH=\\"/org/kde/KWin/InputDevice/\\$DEVICE_NAME\\"; busctl --user set-property org.kde.KWin \\"\\$DBUS_PATH\\" org.kde.KWin.InputDevice naturalScroll b true; done" > /home/${username}/.config/autostart/set-natural-scroll.sh && chmod +x /home/${username}/.config/autostart/set-natural-scroll.sh`
+		);
+
+		await execPromiseWithSudo(
+			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/set-natural-scroll.sh && rm /home/${username}/.config/autostart/set-natural-scroll.sh /home/${username}/.config/autostart/set-natural-scroll.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Set Natural Scroll\\n' > /home/${username}/.config/autostart/set-natural-scroll.desktop`
+		);
+
+		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
 
         await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
 
