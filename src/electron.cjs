@@ -1287,6 +1287,8 @@ done
           `tee /home/${username}/.config/autostart/set-natural-scroll.sh <<'EOF'\n${naturalScrollScript}\nEOF`
         );
 
+		await execPromiseWithSudo(`chmod +x /home/${username}/.config/autostart/set-natural-scroll.sh`);
+
 		const naturalScrollDesktopFile = `[Desktop Entry]
 Type=Application
 Exec=bash -c '/home/${username}/.config/autostart/set-natural-scroll.sh && rm /home/${username}/.config/autostart/set-natural-scroll.sh /home/${username}/.config/autostart/set-natural-scroll.desktop'
@@ -1299,10 +1301,34 @@ Name=Set Natural Scroll
 		  `tee /home/${username}/.config/autostart/set-natural-scroll.desktop <<'EOF'\n${naturalScrollDesktopFile}\nEOF`
 		);
 
-		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
+		const themeApplyScript = `
+#!/bin/bash
+konsave -i /usr/share/blossomos/theme.knsv
+konsave -a theme
+kquitapp6 plasmashell
+sleep 2
+plasmashell &!
+`;
 
-		await execPromise(`sudo -u ${username} bash -c 'konsave -i /usr/share/blossomos/theme.knsv'`);
-		await execPromise(`sudo -u ${username} bash -c 'konsave -a theme'`);
+		await execPromiseWithSudo(
+		  `tee /home/${username}/.config/autostart/apply-theme.sh <<'EOF'\n${themeApplyScript}\nEOF`
+		);
+
+		await execPromiseWithSudo(`chmod +x /home/${username}/.config/autostart/apply-theme.sh`);
+
+		const themeDesktopFile = `[Desktop Entry]
+Type=Application
+Exec=bash -c '/home/${username}/.config/autostart/apply-theme.sh && rm /home/${username}/.config/autostart/apply-theme.sh /home/${username}/.config/autostart/apply-theme.desktop'
+Hidden=false
+NoDisplay=false
+Name=Apply blossomOS Theme
+`;
+
+		await execPromiseWithSudo(
+		  `tee /home/${username}/.config/autostart/apply-theme.desktop <<'EOF'\n${themeDesktopFile}\nEOF`
+		);
+
+		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
 
         await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
 
