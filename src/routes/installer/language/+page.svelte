@@ -43,7 +43,7 @@
 	let keyboards = [
 		{ code: 'us', name: 'US English', description: 'United States' },
 		{ code: 'uk', name: 'UK English', description: 'United Kingdom' },
-		{ code: 'de-latin1-nodeadkeys', name: 'German', description: 'Germany' },
+		{ code: 'de', name: 'German', description: 'Germany' },
 		{ code: 'fr', name: 'French', description: 'France' },
 		{ code: 'es', name: 'Spanish', description: 'Spain' },
 	];
