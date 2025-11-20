@@ -1268,20 +1268,20 @@ for KERNEL in $TOUCH_KERNELS; do
 done
 `;
 
-		await execPromiseWithSudo(
-		`mkdir -p /home/${username}/.config/autostart && echo "${naturalScrollScript.replace(/"/g, '\\"')}" | tee /home/${username}/.config/autostart/set-natural-scroll.sh && chmod +x /home/${username}/.config/autostart/set-natural-scroll.sh`
+		await execPromise(
+		`mkdir -p /home/${username}/.config/autostart && echo "${naturalScrollScript.replace(/"/g, '\\"')}" | sudo tee /home/${username}/.config/autostart/set-natural-scroll.sh && chmod +x /home/${username}/.config/autostart/set-natural-scroll.sh`
 		);
 
-		await execPromiseWithSudo(
-			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/set-natural-scroll.sh && rm /home/${username}/.config/autostart/set-natural-scroll.sh /home/${username}/.config/autostart/set-natural-scroll.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Set Natural Scroll\\n' > /home/${username}/.config/autostart/set-natural-scroll.desktop`
+		await execPromise(
+			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/set-natural-scroll.sh && rm /home/${username}/.config/autostart/set-natural-scroll.sh /home/${username}/.config/autostart/set-natural-scroll.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Set Natural Scroll\\n' | sudo tee /home/${username}/.config/autostart/set-natural-scroll.desktop`
 		);
 
-		await execPromiseWithSudo(
-			`echo -e 'konsave -i /usr/share/blossomos/theme.knsv\\nkonsave -a theme\\nkquitapp6 plasmashell && plasmashell &!' > /home/${username}/.config/autostart/apply-theme.sh && chmod +x /home/${username}/.config/autostart/apply-theme.sh`
+		await execPromise(
+			`echo -e 'konsave -i /usr/share/blossomos/theme.knsv\\nkonsave -a theme\\nkquitapp6 plasmashell && plasmashell &!' | sudo tee /home/${username}/.config/autostart/apply-theme.sh && chmod +x /home/${username}/.config/autostart/apply-theme.sh`
 		);
 
-		await execPromiseWithSudo(
-			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/apply-theme.sh && rm /home/${username}/.config/autostart/apply-theme.sh /home/${username}/.config/autostart/apply-theme.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Apply BlossomOS Theme\\n' > /home/${username}/.config/autostart/apply-theme.desktop`
+		await execPromise(
+			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/apply-theme.sh && rm /home/${username}/.config/autostart/apply-theme.sh /home/${username}/.config/autostart/apply-theme.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Apply BlossomOS Theme\\n' | sudo tee /home/${username}/.config/autostart/apply-theme.desktop`
 		);
 
 		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
