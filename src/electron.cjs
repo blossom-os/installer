@@ -959,9 +959,11 @@ async function installMinimalKDEChroot(rootPartition) {
 	);
 
 	// User setup
+	await execPromiseWithSudo(`cp /etc/skel/.bashrc /mnt/etc/skel/.bashrc`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`,
 	);
+	await execPromiseWithSudo(`${CHROOT} bash -c "cp /etc/skel/.bashrc /home/${USER}/.bashrc"`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "passwd -d ${USER}"`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`,
@@ -975,13 +977,13 @@ async function installMinimalKDEChroot(rootPartition) {
 	log('Configuring SDDM autologin...');
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /etc/sddm.conf.d"`);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=plasma.desktop\nEOF"`,
+		`${CHROOT} bash -c "cat >/etc/sddm.conf.d/autologin.conf <<EOF\n[Autologin]\nUser=${USER}\nSession=plasma.desktop\nRelogin=true\nEOF"`,
 	);
 
 	// Autostart desktop entry
 	await execPromiseWithSudo(`${CHROOT} bash -c "mkdir -p /home/${USER}/.config/autostart"`);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "cat >/home/${USER}/.config/autostart/postinstall.desktop <<EOF\n[Desktop Entry]\nName=BlossomOS Post Install\nExec=/opt/blossomos-installer/start-postinstall.sh\nType=Application\nX-KDE-autostart-after=panel\nHidden=false\nNoDisplay=false\nEOF"`,
+		`${CHROOT} bash -c "cat >/home/${USER}/.config/autostart/postinstall.desktop <<EOF\n[Desktop Entry]\nName=BlossomOS Post Install\nExec=/opt/blossomos-installer/start.sh\nType=Application\nX-KDE-autostart-after=panel\nHidden=false\nNoDisplay=false\nEOF"`,
 	);
 	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /home/${USER}`);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable sddm.service`);
@@ -989,7 +991,7 @@ async function installMinimalKDEChroot(rootPartition) {
 	// Copy installer files
 	log('Copying installer files...');
 	await execPromiseWithSudo(`cp -r /opt/blossomos-installer /mnt/opt/blossomos-installer`);
-	await execPromiseWithSudo(`chmod +x /mnt/opt/blossomos-installer/start-postinstall.sh`);
+	await execPromiseWithSudo(`chmod +x /mnt/opt/blossomos-installer/start.sh`);
 	await execPromiseWithSudo(`touch /mnt/home/${USER}/.postinstall`);
 	await execPromiseWithSudo(`${CHROOT} chown ${USER}:${USER} /home/${USER}/.postinstall`);
 	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /opt/blossomos-installer`);
@@ -1003,7 +1005,7 @@ async function installMinimalKDEChroot(rootPartition) {
 	);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed cups cups-browsed avahi nss-mdns hplip"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed cups cups-browsed avahi nss-mdns hplip system-config-printer cups-pk-helper python-pysmbc"`,
 	);
 	await execPromiseWithSudo(`${CHROOT} systemctl enable cups cups-browsed avahi-daemon`);
 	await execPromiseWithSudo(
@@ -1016,7 +1018,7 @@ async function installMinimalKDEChroot(rootPartition) {
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`,
 	);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle solaar"`,
 	);
 
 	// Chaotic-AUR setup
@@ -1044,7 +1046,7 @@ async function installMinimalKDEChroot(rootPartition) {
 		`${CHROOT} bash -c "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"`,
 	);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC"`,
+		`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC it.mijorus.gearlever"`,
 	);
 
 	// Timeshift setup with dynamic UUIDs
@@ -1234,6 +1236,8 @@ ipcMain.handle(
         await execPromiseWithSudo(
           `useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`
         );
+		await execPromiseWithSudo(`cp /etc/skel/.bashrc /home/${username}/.bashrc`);
+		await execPromiseWithSudo(`chown ${username}:${username} /home/${username}/.bashrc`);
 
         if (password && password.length > 0) {
           await execPromise(
