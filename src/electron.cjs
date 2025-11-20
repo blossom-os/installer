@@ -1268,8 +1268,8 @@ for KERNEL in $TOUCH_KERNELS; do
 done
 `;
 
-		await execPromise(
-		`mkdir -p /home/${username}/.config/autostart && echo "${naturalScrollScript.replace(/"/g, '\\"')}" | sudo tee /home/${username}/.config/autostart/set-natural-scroll.sh && chmod +x /home/${username}/.config/autostart/set-natural-scroll.sh`
+		await execPromiseWithSudo(
+		`mkdir -p /home/${username}/.config/autostart && echo "${naturalScrollScript.replace(/"/g, '\\"')}" | sudo tee /home/${username}/.config/autostart/set-natural-scroll.sh && sudo chmod +x /home/${username}/.config/autostart/set-natural-scroll.sh`
 		);
 
 		await execPromise(
