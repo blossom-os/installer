@@ -1277,7 +1277,7 @@ done
 		);
 
 		await execPromise(
-			`echo -e 'konsave -i /usr/share/blossomos/theme.knsv\\nkonsave -a theme\\nkquitapp6 plasmashell && plasmashell &!' | sudo tee /home/${username}/.config/autostart/apply-theme.sh && chmod +x /home/${username}/.config/autostart/apply-theme.sh`
+			`echo -e 'konsave -i /usr/share/blossomos/theme.knsv\\nkonsave -a theme\\nkquitapp6 plasmashell && plasmashell &!' | sudo tee /home/${username}/.config/autostart/apply-theme.sh && sudo chmod +x /home/${username}/.config/autostart/apply-theme.sh`
 		);
 
 		await execPromise(
