@@ -1257,6 +1257,10 @@ ipcMain.handle(
 		  `mkdir -p /home/${username}/.config/autostart`
 		);
 
+		await execPromiseWithSudo(
+		  `mkdir -p /home/${username}/.cache`
+		);
+
 		const naturalScrollScript = `
 #!/bin/bash
 OUT=$(sudo libinput list-devices)
@@ -1297,6 +1301,7 @@ Name=Set Natural Scroll
 
 		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
 
+		await execPromise(`sudo -u ${username} bash -c 'konsave -i /usr/share/blossomos/theme.knsv'`);
 		await execPromise(`sudo -u ${username} bash -c 'konsave -a theme'`);
 
         await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
