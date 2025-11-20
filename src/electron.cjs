@@ -204,7 +204,7 @@ ipcMain.handle('get-available-keyboard-layouts', async () => {
 	const keyboardLayouts = [
 		{ code: 'us', name: 'US English', lang: 'en' },
 		{ code: 'gb', name: 'UK English', lang: 'en' },
-		{ code: 'de', name: 'German', lang: 'de' },
+		{ code: 'de-latin1-nodeadkeys', name: 'German', lang: 'de' },
 		{ code: 'fr', name: 'French', lang: 'fr' },
 		{ code: 'es', name: 'Spanish', lang: 'es' },
 		{ code: 'it', name: 'Italian', lang: 'it' },
