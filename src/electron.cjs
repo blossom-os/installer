@@ -1330,6 +1330,9 @@ Name=Apply blossomOS Theme
 
 		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
 
+		await execPromise(`sudo -u ${username} bash -c 'konsave -i /usr/share/blossomos/theme.knsv'`);
+		await execPromise(`sudo -u ${username} bash -c 'konsave -a theme'`);
+
         await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
 
         const removeScript = `#!/bin/bash
