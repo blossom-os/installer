@@ -692,6 +692,7 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue.blossom`);
 			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
 			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
+			await execPromiseWithSudo(`cp -r /usr/share/blossomos/ /mnt/usr/share/blossomos/`);
 
 			// Create snapshot
 			log('Creating initial BTRFS snapshot...');
@@ -1038,7 +1039,7 @@ async function installMinimalKDEChroot(rootPartition) {
 	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Syu --noconfirm"`);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar kwin-effect-rounded-corners-git"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay konsave bazaar-git krunner-bazaar kwin-effect-rounded-corners-git"`,
 	);
 
 	// Flatpaks
@@ -1260,6 +1261,14 @@ ipcMain.handle(
 			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/set-natural-scroll.sh && rm /home/${username}/.config/autostart/set-natural-scroll.sh /home/${username}/.config/autostart/set-natural-scroll.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Set Natural Scroll\\n' > /home/${username}/.config/autostart/set-natural-scroll.desktop`
 		);
 
+		await execPromiseWithSudo(
+			`echo -e 'konsave -i /usr/share/blossomos/theme.knsv\\nkonsave -a theme\\nkquitapp6 plasmashell && plasmashell &!' > /home/${username}/.config/autostart/apply-theme.sh && chmod +x /home/${username}/.config/autostart/apply-theme.sh`
+		);
+
+		await execPromiseWithSudo(
+			`echo -e '[Desktop Entry]\\nType=Application\\nExec=bash -c \'/home/${username}/.config/autostart/apply-theme.sh && rm /home/${username}/.config/autostart/apply-theme.sh /home/${username}/.config/autostart/apply-theme.desktop\'\\nHidden=false\\nNoDisplay=false\\nName=Apply BlossomOS Theme\\n' > /home/${username}/.config/autostart/apply-theme.desktop`
+		);
+
 		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
 
         await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
@@ -1310,52 +1319,3 @@ WantedBy=multi-user.target
     });
   }
 );
-
-async function getTouchpads() {
-  const output = await execPromise('libinput list-devices');
-  const devices = [];
-
-  const blocks = output.split('\n\n');
-  for (const block of blocks) {
-    if (!block.toLowerCase().includes('touchpad')) continue;
-
-    const lines = block.split('\n').map(l => l.trim());
-    let name = '';
-    let id = '';
-
-    for (const line of lines) {
-      if (line.startsWith('Device:')) name = line.replace('Device:', '').trim();
-      if (line.startsWith('Id:')) id = line.replace('Id:', '').trim();
-    }
-
-    if (name && id) devices.push({ name, id });
-  }
-
-  return devices;
-}
-
-async function setNaturalScroll(enable) {
-  const devices = await getTouchpads();
-
-  if (devices.length === 0) {
-    await execPromise(
-      `kwriteconfig6 --file kcminputrc --group Touchpad --key NaturalScroll ${enable ? 'true' : 'false'}`
-    );
-  } else {
-    for (const dev of devices) {
-      const [vendor, product] = dev.id.split(':');
-      const block = `[Libinput][${parseInt(vendor, 16)}][${parseInt(product, 16)}][${dev.name}]`;
-      await execPromise(
-        `kwriteconfig6 --file kcminputrc --group "${block}" --key NaturalScroll ${enable ? 'true' : 'false'}`
-      );
-    }
-  }
-
-  await execPromise('qdbus org.kde.KWin /KWin reconfigure');
-
-  resolve({ success: true });
-}
-
-ipcMain.handle('set-natural-scroll', async (event, enable) => {
-  return await setNaturalScroll(enable);
-});

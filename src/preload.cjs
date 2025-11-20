@@ -101,9 +101,6 @@ contextBridge.exposeInMainWorld('electron', {
 			password,
 		);
 	},
-	setNaturalScroll: (enable) => {
-		ipcRenderer.invoke('set-natural-scroll', enable);
-	},
 });
 
 // Also expose installer-specific functions under window.installer

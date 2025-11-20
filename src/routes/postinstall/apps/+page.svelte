@@ -35,7 +35,6 @@
 					}
 				}
 
-                await window.electron.setNaturalScroll(true);
                 await window.electron.runCommand('sudo systemctl enable --now NetworkManager && sudo systemctl disable NetworkManager-wait-online.service');
 
                 fetch("https://api.github.com/")
