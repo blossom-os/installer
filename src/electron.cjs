@@ -956,7 +956,7 @@ async function installMinimalKDEChroot(rootPartition) {
 
 	// Debloat Plasma
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta archlinux-appstream-data"`,
+		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta archlinux-appstream-data plasma-welcome"`,
 	);
 
 	// User setup
