@@ -678,6 +678,12 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd`);
 			await execPromiseWithSudo(`cp /opt/blossomos-installer/static/logo.svg /mnt/usr/share/pixmaps/blossomos-logo.svg`);
 
+			// Copy over branding files
+			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue.blossom`);
+			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
+			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
+			await execPromiseWithSudo(`cp -r /usr/share/blossomos/ /mnt/usr/share/blossomos/`);
+
 			// Create hooks directory
 			await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
 
@@ -688,11 +694,15 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 				`echo -e '${hookContent}' | sudo tee /mnt/etc/pacman.d/hooks/blossom-branding.hook`,
 			);
 
-			// Backup original files
-			await execPromiseWithSudo(`cp /etc/issue /mnt/etc/issue.blossom`);
-			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
-			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
-			await execPromiseWithSudo(`cp -r /usr/share/blossomos/ /mnt/usr/share/blossomos/`);
+			// Create hook to remove dangerous KCMs
+			const kcmHookContent = `[Trigger]\nOperation = Install\nOperation = Upgrade\nType = Package\nTarget = plasma-desktop\n\n[Action]\nDescription = Removing dangerous KDE Control Modules...\nWhen = PostTransaction\nExec = /bin/bash -c '/usr/share/blossomos/kcmoverride.sh'`;
+
+			await execPromise(
+				`echo -e '${kcmHookContent}' | sudo tee /mnt/etc/pacman.d/hooks/blossom-kcm.hook`,
+			);
+
+			// Run the KCM override script once now
+			await execPromiseWithSudo(`arch-chroot /mnt /usr/share/blossomos/kcmoverride.sh`);
 
 			// Create snapshot
 			log('Creating initial BTRFS snapshot...');
