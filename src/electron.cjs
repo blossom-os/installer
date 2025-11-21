@@ -683,6 +683,7 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			await execPromiseWithSudo(`cp /etc/os-release /mnt/etc/os-release.blossom`);
 			await execPromiseWithSudo(`cp /etc/motd /mnt/etc/motd.blossom`);
 			await execPromiseWithSudo(`cp -r /usr/share/blossomos/ /mnt/usr/share/blossomos/`);
+			await execPromiseWithSudo(`cp /etc/sddm.conf.d/kde_settings.conf /mnt/etc/sddm.conf.d/kde_settings.conf`);
 
 			// Create hooks directory
 			await execPromiseWithSudo(`mkdir -p /mnt/etc/pacman.d/hooks`);
