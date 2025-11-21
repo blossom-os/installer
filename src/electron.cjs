@@ -970,6 +970,8 @@ async function installMinimalKDEChroot(rootPartition) {
 		`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`,
 	);
 
+	await execPromiseWithSudo(`${CHROOT} chown -R ${USER}:${USER} /home/${USER}`);
+
 	// Bun installation
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "sudo -u ${USER} bash -c 'curl -fsSL https://bun.sh/install | bash'"`,
