@@ -703,8 +703,8 @@ ipcMain.handle('install-system', async (event, diskPath) => {
 			);
 
 			// Run the KCM override script once now
-			await execPromiseWithSudo(`arch-chroot /mnt /usr/share/blossomos/kcmoverride.sh`);
-
+			await execPromiseWithSudo(`arch-chroot /mnt bash -c 'chmod +x /usr/share/blossomos/kcmoverride.sh && /usr/share/blossomos/kcmoverride.sh'`);
+			
 			// Create snapshot
 			log('Creating initial BTRFS snapshot...');
 			event.sender.send('installation-progress', { step: 'finalize', progress: 95 });
