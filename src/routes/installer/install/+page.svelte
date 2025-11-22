@@ -439,6 +439,12 @@
 		showLog = !showLog;
 	}
 
+	async function unmountPartitions() {
+		if (window.electron) {
+			await window.electron.runCommandAsync(`sudo umount -R /mnt || true`);
+		}
+	}
+
 	onMount(async () => {
 		// Load saved language and translations
 		const savedLanguage = getCurrentLanguage();
@@ -612,7 +618,7 @@
 							Back to Disk Selection
 						</Button>
 						<Button
-							onclick={() => {
+							onclick={async () => {
 								error = null;
 								isInstalling = false;
 								isComplete = false;
@@ -621,6 +627,7 @@
 								installationLog = [];
 								currentSlide = 1;
 								stopSlideshow(); // Clean up any existing slideshow
+								await unmountPartitions(); // Ensure partitions are unmounted before retrying
 								startInstallation();
 							}}
 						>

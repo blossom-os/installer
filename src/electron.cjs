@@ -951,10 +951,10 @@ async function installBaseSystem(rootPartition) {
 	await execPromiseWithSudo(`arch-chroot /mnt pacman-key --refresh-keys`);
 
 	// Install minimal KDE in chroot
-	await installMinimalKDEChroot(rootPartition);
+	await installDesktopEnvironment(rootPartition);
 }
 
-async function installMinimalKDEChroot(rootPartition) {
+async function installDesktopEnvironment(rootPartition) {
 	const CHROOT = 'arch-chroot /mnt';
 	const USER = 'liveuser';
 
