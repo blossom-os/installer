@@ -962,7 +962,7 @@ async function installDesktopEnvironment(rootPartition) {
 
 	// Minimal KDE packages
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak unzip git bash-completion"`,
+		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak unzip git bash-completion kde-applications"`,
 	);
 
 	// Debloat Plasma
