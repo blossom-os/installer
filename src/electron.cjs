@@ -967,7 +967,7 @@ async function installDesktopEnvironment(rootPartition) {
 
 	// Debloat Plasma
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta archlinux-appstream-data plasma-welcome"`,
+		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta archlinux-appstream-data plasma-welcome kmix"`,
 	);
 
 	// User setup
