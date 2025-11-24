@@ -1036,7 +1036,7 @@ async function installDesktopEnvironment(rootPartition) {
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`,
 	);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole gwenview kwrite systemsettings ark spectacle kdeconnect drkonqi plasma-systemmonitor xournalpp docker distrobox"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole gwenview kwrite systemsettings ark spectacle kdeconnect drkonqi plasma-systemmonitor xournalpp docker distrobox isoimagewriter"`,
 	);
 
 	// Chaotic-AUR setup
