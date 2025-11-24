@@ -966,7 +966,7 @@ async function installDesktopEnvironment(rootPartition) {
 
 	// Minimal KDE packages
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak unzip git bash-completion kde-applications"`,
+		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak unzip git bash-completion"`,
 	);
 
 	// Debloat Plasma
@@ -1036,7 +1036,7 @@ async function installDesktopEnvironment(rootPartition) {
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`,
 	);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kate systemsettings okular ark spectacle solaar"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kwrite systemsettings ark spectacle kdeconnect drkonqi plasma-systemmonitor xournalpp docker distrobox"`,
 	);
 
 	// Chaotic-AUR setup
@@ -1138,6 +1138,7 @@ EOF`);
 
 	// Enable essential services
 	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable NetworkManager`);
+	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable docker`);
 
 	// Install NVIDIA drivers if detected
 	try {
@@ -1252,7 +1253,7 @@ ipcMain.handle(
         log(`Setting up user account: ${username}`);
 
         await execPromiseWithSudo(
-          `useradd -m -G wheel,audio,video,optical,storage,power,network ${username}`
+          `useradd -m -G wheel,audio,video,optical,storage,power,network,docker ${username}`
         );
 		await execPromiseWithSudo(`cp /etc/skel/.bashrc /home/${username}/.bashrc`);
 
