@@ -1064,7 +1064,7 @@ async function installDesktopEnvironment(rootPartition) {
 		`${CHROOT} bash -c "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"`,
 	);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC it.mijorus.gearlever"`,
+		`${CHROOT} bash -c "flatpak install -y flathub org.mozilla.firefox org.libreoffice.LibreOffice org.videolan.VLC it.mijorus.gearlever io.github.nokse22.Exhibit"`,
 	);
 
 	// Timeshift setup with dynamic UUIDs
