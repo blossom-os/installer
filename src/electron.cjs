@@ -2,6 +2,9 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { powerSaveBlocker } = require('electron');
+
+const powerSaveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
 
 // Logging function that writes to both console and file
 const LOG_FILE = '/home/liveuser/installer.log';
@@ -217,6 +220,7 @@ ipcMain.handle('get-available-keyboard-layouts', async () => {
 	return keyboardLayouts;
 });
 app.on('window-all-closed', () => {
+	powerSaveBlocker.stop(powerSaveBlockerId);
 	if (process.platform !== 'darwin') app.quit();
 });
 
