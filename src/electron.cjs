@@ -971,7 +971,7 @@ async function installDesktopEnvironment(rootPartition) {
 
 	// Debloat Plasma
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta archlinux-appstream-data plasma-welcome kmix"`,
+		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta archlinux-appstream-data plasma-welcome"`,
 	);
 
 	// User setup
@@ -1036,7 +1036,7 @@ async function installDesktopEnvironment(rootPartition) {
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`,
 	);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole kwrite systemsettings ark spectacle kdeconnect drkonqi plasma-systemmonitor xournalpp docker distrobox"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed dolphin konsole gwenview kwrite systemsettings ark spectacle kdeconnect drkonqi plasma-systemmonitor xournalpp docker distrobox"`,
 	);
 
 	// Chaotic-AUR setup
