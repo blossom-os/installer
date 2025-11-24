@@ -1056,7 +1056,7 @@ async function installDesktopEnvironment(rootPartition) {
 	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Syu --noconfirm"`);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay konsave bazaar-git krunner-bazaar kwin-effect-rounded-corners-git"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay konsave bazaar-git krunner-bazaar kwin-effect-rounded-corners-git darkly-qt6-git pinta kamoso kontainer-git"`,
 	);
 
 	// Flatpaks
