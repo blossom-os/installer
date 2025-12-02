@@ -984,6 +984,17 @@ async function installDesktopEnvironment(rootPartition) {
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "mkinitcpio -P"`,
 	);
+	
+	// Configure mkinitcpio for Plymouth
+	log('Configuring mkinitcpio for Plymouth...');
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block plymouth filesystems fsck)/' /etc/mkinitcpio.conf"`,
+	);
+	
+	// Regenerate initramfs with Plymouth
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "mkinitcpio -P"`,
+	);
 
 	// User setup
 	await execPromiseWithSudo(`cp /etc/skel/.bashrc /mnt/etc/skel/.bashrc`);
