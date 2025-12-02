@@ -778,7 +778,7 @@
 						<div class="relative w-full max-w-lg aspect-video">
 							<img
 								src="/{currentSlide}.png"
-								alt="Installation step {currentSlide}"
+								alt="Presentation slide {currentSlide}"
 								class="w-full h-full object-cover rounded-lg shadow-lg transition-all duration-500 ease-in-out"
 								on:error={() => {
 									// Fallback if image doesn't exist
