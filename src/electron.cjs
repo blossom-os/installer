@@ -941,9 +941,9 @@ async function installBaseSystem(rootPartition) {
 	// Update package databases
 	await execPromiseWithSudo(`pacman -Sy`);
 
-	// Install base system
+	// Install base system with Plymouth
 	await execPromiseWithSudo(
-		`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs networkmanager `,
+		`pacstrap /mnt base base-devel linux linux-firmware btrfs-progs networkmanager plymouth`,
 	);
 
 	// Generate fstab
@@ -966,12 +966,23 @@ async function installDesktopEnvironment(rootPartition) {
 
 	// Minimal KDE packages
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak unzip git bash-completion"`,
+		`${CHROOT} bash -c "pacman -Sy --noconfirm --needed plasma-meta flatpak unzip git bash-completion mkinitcpio"`,
 	);
 
 	// Debloat Plasma
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "pacman -R --noconfirm discover plasma-meta archlinux-appstream-data plasma-welcome"`,
+	);
+	
+	// Configure mkinitcpio for Plymouth
+	log('Configuring mkinitcpio for Plymouth...');
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block plymouth filesystems fsck)/' /etc/mkinitcpio.conf"`,
+	);
+	
+	// Regenerate initramfs with Plymouth
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "mkinitcpio -P"`,
 	);
 
 	// User setup
@@ -1021,6 +1032,33 @@ async function installDesktopEnvironment(rootPartition) {
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils gnome-bluetooth alsa-utils sof-firmware"`,
 	);
+	
+	// Plymouth boot splash setup
+	log('Installing and configuring Plymouth...');
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed plymouth imagemagick"`,
+	);
+	
+	// Clone and install plymouth-modern-bgrt theme
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "cd /tmp && git clone https://github.com/blossom-os/plymouth-modern-bgrt.git"`,
+	);
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "cd /tmp/plymouth-modern-bgrt && chmod +x install.sh && ./install.sh"`,
+	);
+	
+	// Set the plymouth theme
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "plymouth-set-default-theme -R plymouth-modern-bgrt"`,
+	);
+	
+	// Clean up theme installation files
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "rm -rf /tmp/plymouth-modern-bgrt"`,
+	);
+	
+	log('Plymouth configuration completed.');
+	
 	await execPromiseWithSudo(`${CHROOT} systemctl enable bluetooth.service`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed cups cups-browsed avahi nss-mdns hplip system-config-printer cups-pk-helper python-pysmbc"`,
@@ -1169,11 +1207,11 @@ async function installEFIBootloader(rootPartition) {
 	// Install systemd-boot
 	await execPromiseWithSudo(`arch-chroot /mnt bootctl install`);
 
-	// Create bootloader entry with disk identifier and BTRFS subvolume support
+	// Create bootloader entry with disk identifier, BTRFS subvolume support, and Plymouth
 	const bootEntry = `title   blossomOS
 linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
-options root=${rootPartition} rootflags=subvol=@ rw quiet amdgpu.dcdebugmask=0x10`;
+options root=${rootPartition} rootflags=subvol=@ rw quiet splash amdgpu.dcdebugmask=0x10`;
 
 	await execPromise(`echo -e '${bootEntry}' | sudo tee /mnt/boot/loader/entries/blossomos.conf`);
 
@@ -1216,6 +1254,11 @@ async function installGRUB(diskPath) {
 		`arch-chroot /mnt sed -i 's/#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub`,
 	);
 	await execPromiseWithSudo(`arch-chroot /mnt sed -i 's/Arch/blossomOS/' /etc/default/grub`);
+	
+	// Add Plymouth to GRUB
+	await execPromiseWithSudo(
+		`arch-chroot /mnt sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="[^"]*/& quiet splash/' /etc/default/grub`,
+	);
 
 	// Generate GRUB config
 	await execPromiseWithSudo(`arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg`);
