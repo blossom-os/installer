@@ -255,8 +255,8 @@ See [LICENSE](LICENSE) file for details.
 ## Authors
 
 **blossomOS Team**  
-Website: [https://blossom-os.com](https://blossom-os.com)  
-Support: <support@blossom-os.com>
+Website: [https://blossomos.org](https://blossomos.org)  
+Support: <support@blossomos.org>
 
 ## Related Projects
 
