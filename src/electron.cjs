@@ -1105,7 +1105,13 @@ async function installDesktopEnvironment(rootPartition) {
 	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "pacman -Syu --noconfirm"`);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay konsave bazaar-git krunner-bazaar kwin-effect-rounded-corners-git darkly-qt6-git pinta kamoso kontainer-git"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar kwin-effect-rounded-corners-git darkly-qt6-git pinta kamoso kontainer-git"`,
+	);
+
+	// Install konsave-ng fork
+	log('Installing konsave-ng fork...');
+	await execPromiseWithSudo(
+		`${CHROOT} bash -c "cd /tmp && git clone https://github.com/blossom-os/konsave-ng.git && cd konsave-ng && python -m pip install . --break-system-packages"`,
 	);
 
 	// Flatpaks
