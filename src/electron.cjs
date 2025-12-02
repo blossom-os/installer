@@ -1246,7 +1246,7 @@ options root=${rootPartition} rootflags=subvol=@ rw quiet splash amdgpu.dcdebugm
 
 	// Configure loader
 	const loaderConfig = `default  blossomos
-timeout  3
+timeout  0
 console-mode max
 editor   no`;
 
