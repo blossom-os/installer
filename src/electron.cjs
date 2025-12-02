@@ -1079,7 +1079,7 @@ async function installDesktopEnvironment(rootPartition) {
 		`${CHROOT} bash -c "sed -i '/^hosts:/ s/mymachines resolve \\[!UNAVAIL=return\\] files myhostname dns/mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns/' /etc/nsswitch.conf"`,
 	);
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "pacman -S --noconfirm --needed skanpage qt6-tools sshfs wacomtablet"`,
+		`${CHROOT} bash -c "pacman -S --noconfirm --needed skanpage qt6-tools sshfs wacomtablet libinput"`,
 	);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed noto-fonts-emoji noto-fonts-cjk noto-fonts-extra noto-fonts ttf-dejavu"`,
