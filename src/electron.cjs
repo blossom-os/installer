@@ -984,17 +984,6 @@ async function installDesktopEnvironment(rootPartition) {
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "mkinitcpio -P"`,
 	);
-	
-	// Configure mkinitcpio for Plymouth
-	log('Configuring mkinitcpio for Plymouth...');
-	await execPromiseWithSudo(
-		`${CHROOT} bash -c "sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block plymouth filesystems fsck)/' /etc/mkinitcpio.conf"`,
-	);
-	
-	// Regenerate initramfs with Plymouth
-	await execPromiseWithSudo(
-		`${CHROOT} bash -c "mkinitcpio -P"`,
-	);
 
 	// User setup
 	await execPromiseWithSudo(`cp /etc/skel/.bashrc /mnt/etc/skel/.bashrc`);
@@ -1049,13 +1038,10 @@ async function installDesktopEnvironment(rootPartition) {
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed plymouth imagemagick"`,
 	);
-	
-	// Clone and install plymouth-modern-bgrt theme
+
+	// Clone and install plymouth-modern-bgrt theme (single chroot session to avoid /tmp races)
 	await execPromiseWithSudo(
-		`${CHROOT} bash -c "cd /tmp && git clone https://github.com/blossom-os/plymouth-modern-bgrt.git"`,
-	);
-	await execPromiseWithSudo(
-		`${CHROOT} bash -c "cd /tmp/plymouth-modern-bgrt && chmod +x install.sh && ./install.sh"`,
+		`${CHROOT} bash -c "cd /tmp && rm -rf plymouth-modern-bgrt && git clone https://github.com/blossom-os/plymouth-modern-bgrt.git && cd plymouth-modern-bgrt && chmod +x install.sh && ./install.sh"`,
 	);
 	
 	// Set the plymouth theme
