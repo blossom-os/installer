@@ -1381,11 +1381,14 @@ Name=Set Natural Scroll
 
 		const themeApplyScript = `
 #!/bin/bash
-konsave -i /usr/share/blossomos/theme.knsv
-konsave -a theme
-kquitapp6 plasmashell
-sleep 2
-plasmashell &!
+if [ ! -f ~/.configured ]; then
+  konsave -i /usr/share/blossomos/theme.knsv
+  konsave -a theme
+  kquitapp6 plasmashell
+  sleep 2
+  plasmashell &!
+  touch ~/.configured
+fi
 `;
 
 		await execPromiseWithSudo(
@@ -1396,7 +1399,7 @@ plasmashell &!
 
 		const themeDesktopFile = `[Desktop Entry]
 Type=Application
-Exec=bash -c '/home/${username}/.config/autostart/apply-theme.sh && rm /home/${username}/.config/autostart/apply-theme.sh /home/${username}/.config/autostart/apply-theme.desktop'
+Exec=bash -c '/home/${username}/.config/autostart/apply-theme.sh'
 Hidden=false
 NoDisplay=false
 Name=Apply blossomOS Theme
