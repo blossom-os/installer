@@ -1173,7 +1173,7 @@ async function installEFIBootloader(rootPartition) {
 	const bootEntry = `title   blossomOS
 linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
-options root=${rootPartition} rootflags=subvol=@ rw quiet`;
+options root=${rootPartition} rootflags=subvol=@ rw quiet amdgpu.dcdebugmask=0x10`;
 
 	await execPromise(`echo -e '${bootEntry}' | sudo tee /mnt/boot/loader/entries/blossomos.conf`);
 
