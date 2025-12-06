@@ -1094,12 +1094,6 @@ async function installDesktopEnvironment(rootPartition) {
 		`${CHROOT} bash -c "pacman -S --noconfirm --needed yay bazaar-git krunner-bazaar kwin-effect-rounded-corners-git darkly-qt6-git pinta kamoso kontainer-git python-pip libinput-tools"`,
 	);
 
-	// Install konsave-ng fork
-	log('Installing konsave-ng fork...');
-	await execPromiseWithSudo(
-		`${CHROOT} bash -c "cd /tmp && git clone https://github.com/blossom-os/konsave-ng.git && cd konsave-ng && python -m pip install . --break-system-packages"`,
-	);
-
 	// Flatpaks
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo"`,
@@ -1365,40 +1359,7 @@ Name=Set Natural Scroll
 		  `tee /home/${username}/.config/autostart/set-natural-scroll.desktop <<'EOF'\n${naturalScrollDesktopFile}\nEOF`
 		);
 
-		const themeApplyScript = `
-#!/bin/bash
-if [ ! -f ~/.configured ]; then
-  konsave -i /usr/share/blossomos/theme.knsv
-  konsave -a theme
-  kquitapp6 plasmashell
-  sleep 2
-  plasmashell &!
-  touch ~/.configured
-fi
-`;
-
-		await execPromiseWithSudo(
-		  `tee /home/${username}/.config/autostart/apply-theme.sh <<'EOF'\n${themeApplyScript}\nEOF`
-		);
-
-		await execPromiseWithSudo(`chmod +x /home/${username}/.config/autostart/apply-theme.sh`);
-
-		const themeDesktopFile = `[Desktop Entry]
-Type=Application
-Exec=bash -c '/home/${username}/.config/autostart/apply-theme.sh'
-Hidden=false
-NoDisplay=false
-Name=Apply blossomOS Theme
-`;
-
-		await execPromiseWithSudo(
-		  `tee /home/${username}/.config/autostart/apply-theme.desktop <<'EOF'\n${themeDesktopFile}\nEOF`
-		);
-
 		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
-
-		await execPromise(`sudo -u ${username} bash -c 'konsave -i /usr/share/blossomos/theme.knsv'`);
-		await execPromise(`sudo -u ${username} bash -c 'konsave -a theme'`);
 
         await execPromiseWithSudo(`chfn -f "${name}" ${username}`);
 

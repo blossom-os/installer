@@ -19,8 +19,6 @@ for KERNEL in $TOUCH_KERNELS; do
     busctl --user set-property org.kde.KWin "$DBUS_PATH" org.kde.KWin.InputDevice naturalScroll b true
 done
 
-konsave -i /usr/share/blossomos/theme.knsv
-konsave -a theme
 killall plasmashell
 cd /opt/blossomos-installer
 /home/$USER/.bun/bin/bun dev
