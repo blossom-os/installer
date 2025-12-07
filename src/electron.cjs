@@ -986,11 +986,11 @@ async function installDesktopEnvironment(rootPartition) {
 	);
 
 	// User setup
-	await execPromiseWithSudo(`cp /etc/skel/.bashrc /mnt/etc/skel/.bashrc`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "useradd -m -G wheel,audio,video,optical,storage,power,network ${USER}"`,
 	);
 	await execPromiseWithSudo(`${CHROOT} bash -c "cp -ra /etc/skel/. /home/${USER}/"`);
+	await execPromiseWithSudo(`cp -r /etc/skel /mnt/etc/skel`);
 	await execPromiseWithSudo(`${CHROOT} bash -c "passwd -d ${USER}"`);
 	await execPromiseWithSudo(
 		`${CHROOT} bash -c "sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers"`,
@@ -1295,7 +1295,8 @@ ipcMain.handle(
         await execPromiseWithSudo(
           `useradd -m -G wheel,audio,video,optical,storage,power,network,docker ${username}`
         );
-		await execPromiseWithSudo(`cp /etc/skel/.bashrc /home/${username}/.bashrc`);
+		await execPromiseWithSudo(`cp -ra /etc/skel/. /home/${username}/`);
+		await execPromiseWithSudo(`chown -R ${username}:${username} /home/${username}`);
 
         if (password && password.length > 0) {
           await execPromise(
