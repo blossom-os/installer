@@ -1174,6 +1174,7 @@ EOF`);
 	// Enable essential services
 	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable NetworkManager`);
 	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable docker`);
+	await execPromiseWithSudo(`arch-chroot /mnt systemctl enable systemd-resolved`);
 
 	// Install NVIDIA drivers if detected
 	try {
